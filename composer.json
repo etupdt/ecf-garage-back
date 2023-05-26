@@ -15,6 +15,7 @@
         "symfony/dotenv": "6.2.*",
         "symfony/flex": "^2",
         "symfony/framework-bundle": "6.2.*",
+        "symfony/http-client": "6.2.*",
         "symfony/runtime": "6.2.*",
         "symfony/security-bundle": "6.2.*",
         "symfony/yaml": "6.2.*"
@@ -68,6 +69,13 @@
         }
     },
     "require-dev": {
+        "behat/behat": "^3.13",
+        "doctrine/data-fixtures": "^1.6",
+        "friends-of-behat/mink-browserkit-driver": "^1.6",
+        "friends-of-behat/mink-extension": "^2.7",
+        "friends-of-behat/page-object-extension": "^0.3.2",
+        "friends-of-behat/symfony-extension": "^2.4",
+        "phpunit/phpunit": "^10.1",
         "symfony/maker-bundle": "^1.48"
     }
 }
