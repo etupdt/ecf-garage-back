@@ -65,7 +65,7 @@ class ScenariiContext extends TestCase implements Context
     $content = json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
 
     $this->token = $content['token'];
-    $this->roles = $content['data']['roles'];
+#    $this->roles = $content['data']['roles'];
     
     $this->status = $response->getStatusCode();
 

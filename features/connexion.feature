@@ -1,8 +1,11 @@
+#language: fr
+Fonctionnalité: Test de connexion admin
+
   Scénario: Je me connecte
     Etant donné que mes coordonnees sont:
 		"""
 		{
-			"vincent.parrot@garage.com",
+			"email" : "vincent.parrot@garage.com",
 			"password" : "achanger"
 		}
 		"""
