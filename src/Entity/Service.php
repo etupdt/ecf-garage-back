@@ -25,6 +25,9 @@ class Service
     #[ORM\ManyToMany(targetEntity: Garage::class, mappedBy: 'services')]
     private Collection $garages;
 
+    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    private ?Image $image = null;
+
     public function __construct()
     {
         $this->garages = new ArrayCollection();
@@ -82,6 +85,18 @@ class Service
         if ($this->garages->removeElement($garage)) {
             $garage->removeService($this);
         }
+
+        return $this;
+    }
+
+    public function getImage(): ?Image
+    {
+        return $this->image;
+    }
+
+    public function setImage(?Image $image): self
+    {
+        $this->image = $image;
 
         return $this;
     }

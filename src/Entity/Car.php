@@ -30,16 +30,15 @@ class Car
     #[ORM\OneToMany(mappedBy: 'car', targetEntity: Feature::class, orphanRemoval: true)]
     private Collection $features;
 
-    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Image $image = null;
-
-    #[ORM\OneToMany(mappedBy: 'car', targetEntity: Image::class, orphanRemoval: true)]
-    private Collection $images;
-
     #[ORM\ManyToOne(inversedBy: 'cars')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Garage $garage = null;
+
+    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    private ?Image $image = null;
+
+    #[ORM\OneToMany(mappedBy: 'car', targetEntity: Image::class)]
+    private Collection $images;
 
     public function __construct()
     {
@@ -143,12 +142,24 @@ class Car
         return $this;
     }
 
+    public function getGarage(): ?Garage
+    {
+        return $this->garage;
+    }
+
+    public function setGarage(?Garage $garage): self
+    {
+        $this->garage = $garage;
+
+        return $this;
+    }
+
     public function getImage(): ?Image
     {
         return $this->image;
     }
 
-    public function setImage(Image $image): self
+    public function setImage(?Image $image): self
     {
         $this->image = $image;
 
@@ -181,18 +192,6 @@ class Car
                 $image->setCar(null);
             }
         }
-
-        return $this;
-    }
-
-    public function getGarage(): ?Garage
-    {
-        return $this->garage;
-    }
-
-    public function setGarage(?Garage $garage): self
-    {
-        $this->garage = $garage;
 
         return $this;
     }
