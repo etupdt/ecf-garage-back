@@ -13,15 +13,15 @@ class ScenariiContext extends TestCase implements Context
   private $apiUrl = "https://localhost:8000";
   private $email;
   private $password;
-  private $status;
+  private $response;
   private array $roles;
   private $token;
+  private $garage;
 
   public function __construct(private HttpClientInterface $httpClient)
   {
     $this->email = "";
     $this->password = "";
-    $this->status = 0;
     $this->roles = [];
     $this->token = "";
   }    
@@ -53,7 +53,6 @@ class ScenariiContext extends TestCase implements Context
         'headers' => [
           'Content-Type' => 'application/json',
           'Accept' => '*/*',
-          'Host' => 'localhost' 
         ],
         'body' => json_encode([
           'username' => $this->email,
@@ -63,11 +62,11 @@ class ScenariiContext extends TestCase implements Context
     );
 
     $content = json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
-
+    
     $this->token = $content['token'];
     $this->roles = $content['data']['roles'];
     
-    $this->status = $response->getStatusCode();
+    $this->response = $response;
 
   }
   
@@ -76,7 +75,7 @@ class ScenariiContext extends TestCase implements Context
    */
   public function leCodeRetourEst(int $status)
   {
-    $this->assertSame($this->status, $status);
+    $this->assertSame($this->response->getStatusCode(), $status);
   }
     
   /**
@@ -85,6 +84,50 @@ class ScenariiContext extends TestCase implements Context
   public function lesRolesContiennent(string $role)
   {
     $this->assertSame(in_array($role, $this->roles), true);
+  }
+    
+  /**
+   * @Given le garage est:
+   */
+  public function jeSuisConnecteEnAdmin(PyStringNode $garage)
+  {
+    $this->garage = (string)$garage;   //json_decode((string)$garage , true, 512, JSON_THROW_ON_ERROR);
+  }
+
+   /**
+   * @When je cree le garage
+   */
+  public function jeCreeLeGarage()
+  {
+
+    var_dump($this->garage);
+
+    $response = $this->httpClient->request(
+      'POST',
+      $this->apiUrl.'/api/garage',
+      [
+        'verify_peer' => false,
+        'headers' => [
+          'Content-Type' => 'application/json',
+          'Accept' => '*/*',
+          'authorization' => 'Bearer '.$this->token
+        ],
+        'body' => $this->garage
+      ]
+    );
+
+    $this->response = $response;
+
+  }
+  
+  /**
+   * @Then le message de retour est :message
+   */
+  public function leMessageDeRetourEst(string $message)
+  {
+    $content = json_decode($this->response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+    var_dump($content);
+    $this->assertSame($content['message'], $message);
   }
     
 }
