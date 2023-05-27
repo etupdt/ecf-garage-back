@@ -16,7 +16,7 @@ use App\Repository\GarageRepository;
 class GarageController extends AbstractController
 {
 
-    #[Route('/api/garage', name: 'app_garage', methods: ['POST'])]
+    #[Route('/api/garage', name: 'app_post_garage', methods: ['POST'])]
     public function create(Request $request, SerializerInterface $serializer, EntityManagerInterface $em): JsonResponse
     {
 
@@ -30,7 +30,7 @@ class GarageController extends AbstractController
 
     }
     
-    #[Route('/api/garage', name: 'app_garage', methods: ['GET'])]
+    #[Route('/api/garage', name: 'app_get_garage', methods: ['GET'])]
     public function findAll(GarageRepository $garageRepository, SerializerInterface $serializer): JsonResponse
     {
 
@@ -53,7 +53,7 @@ class GarageController extends AbstractController
   
     }
     
-    #[Route('/api/garage/{id}', name: 'app_garage_id', methods: ['GET'])]
+    #[Route('/api/garage/{id}', name: 'app_get_garage_id', methods: ['GET'])]
     public function find(Garage $garage, SerializerInterface $serializer): JsonResponse
     {
 
@@ -65,7 +65,8 @@ class GarageController extends AbstractController
                     return $object->getId();
                 },
                 AbstractNormalizer::IGNORED_ATTRIBUTES => ['services', 'contacts', 'users', 'cars', 'comments'],
-            ]);
+            ]
+        );
 
         return new JsonResponse(
             $garages, 
@@ -76,7 +77,7 @@ class GarageController extends AbstractController
   
     }
     
-    #[Route('/api/garage/{id}', name: 'app_garage_id', methods: ['PUT'])]
+    #[Route('/api/garage/{id}', name: 'app_put_garage_id', methods: ['PUT'])]
     public function update(Request $request, 
                             Garage $currentGarage, 
                             SerializerInterface $serializer, 
@@ -101,7 +102,7 @@ class GarageController extends AbstractController
   
     }
     
-    #[Route('/api/garage/{id}', name: 'app_garage_id', methods: ['DELETE'])]
+    #[Route('/api/garage/{id}', name: 'app_delete_garage_id', methods: ['DELETE'])]
     public function delete(Garage $garage, 
                             EntityManagerInterface $em
         ): JsonResponse
