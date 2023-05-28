@@ -17,8 +17,23 @@ class ServiceController extends AbstractController
 {
 
     #[Route('/api/service', name: 'app_post_service', methods: ['POST'])]
-    public function create(Request $request, SerializerInterface $serializer, EntityManagerInterface $em): JsonResponse
+    public function create(
+        Request $request, 
+        SerializerInterface $serializer, 
+        EntityManagerInterface $em
+    ): JsonResponse
     {
+
+        $payload = $this->jwtDecodePayload($request->headers->get('Authorization'));
+
+        if (!in_array("ROLE_ADMIN", $payload->roles)) {
+            return new JsonResponse(
+                ['message' => 'user non habilité !'],
+                Response::HTTP_UNAUTHORIZED, 
+                ['Content-Type' => 'application/json;charset=UTF-8'], 
+                true
+            );
+        }
 
         $service = $serializer->deserialize($request->getContent(), Service::class, 'json');
         $em->persist($service);
@@ -31,7 +46,10 @@ class ServiceController extends AbstractController
     }
     
     #[Route('/api/service', name: 'app_get_service', methods: ['GET'])]
-    public function findAll(ServiceRepository $serviceRepository, SerializerInterface $serializer): JsonResponse
+    public function findAll(
+        ServiceRepository $serviceRepository, 
+        SerializerInterface $serializer
+    ): JsonResponse
     {
 
         $services = $serializer->serialize(
@@ -55,8 +73,23 @@ class ServiceController extends AbstractController
     }
     
     #[Route('/api/service/{id}', name: 'app_get_service_id', methods: ['GET'])]
-    public function find(Service $service, SerializerInterface $serializer): JsonResponse
+    public function find(
+        Request $request, 
+        Service $service, 
+        SerializerInterface $serializer
+    ): JsonResponse
     {
+
+        $payload = $this->jwtDecodePayload($request->headers->get('Authorization'));
+
+        if (!in_array("ROLE_ADMIN", $payload->roles)) {
+            return new JsonResponse(
+                ['message' => 'user non habilité !'],
+                Response::HTTP_UNAUTHORIZED, 
+                ['Content-Type' => 'application/json;charset=UTF-8'], 
+                true
+            );
+        }
 
         $services = $serializer->serialize(
             $service,
@@ -79,12 +112,24 @@ class ServiceController extends AbstractController
     }
     
     #[Route('/api/service/{id}', name: 'ap_put_service_id', methods: ['PUT'])]
-    public function update(Request $request, 
-                            Service $currentService, 
-                            SerializerInterface $serializer, 
-                            EntityManagerInterface $em
-        ): JsonResponse
+    public function update(
+        Request $request, 
+        Service $currentService, 
+        SerializerInterface $serializer, 
+        EntityManagerInterface $em
+    ): JsonResponse
     {
+
+        $payload = $this->jwtDecodePayload($request->headers->get('Authorization'));
+
+        if (!in_array("ROLE_ADMIN", $payload->roles)) {
+            return new JsonResponse(
+                ['message' => 'user non habilité !'],
+                Response::HTTP_UNAUTHORIZED, 
+                ['Content-Type' => 'application/json;charset=UTF-8'], 
+                true
+            );
+        }
 
         $updatedService = $serializer->deserialize($request->getContent(), 
                 Service::class, 
@@ -104,10 +149,23 @@ class ServiceController extends AbstractController
     }
     
     #[Route('/api/service/{id}', name: 'app_delete_service_id', methods: ['DELETE'])]
-    public function delete(Service $service, 
-                            EntityManagerInterface $em
-        ): JsonResponse
+    public function delete(
+        Request $request, 
+        Service $service, 
+        EntityManagerInterface $em
+    ): JsonResponse
     {
+
+        $payload = $this->jwtDecodePayload($request->headers->get('Authorization'));
+
+        if (!in_array("ROLE_ADMIN", $payload->roles)) {
+            return new JsonResponse(
+                ['message' => 'user non habilité !'],
+                Response::HTTP_UNAUTHORIZED, 
+                ['Content-Type' => 'application/json;charset=UTF-8'], 
+                true
+            );
+        }
 
         $em->remove($service);
         $em->flush();
@@ -119,6 +177,16 @@ class ServiceController extends AbstractController
             ['Content-Type' => 'application/json;charset=UTF-8'], 
         );
     
+    }
+
+    public function jwtDecodePayload (string $jwt) 
+    {
+        $tokenPayload = base64_decode(explode('.', str_replace(
+            "Bearer ",
+            "",
+            $jwt
+        ))[1]);
+        return json_decode($tokenPayload);        
     }
 
 }

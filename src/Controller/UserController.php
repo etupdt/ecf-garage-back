@@ -5,26 +5,35 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
-use App\Entity\Garage;
+use App\Entity\User;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface ;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\HttpFoundation\Response;
+use App\Repository\UserRepository;
 use App\Repository\GarageRepository;
-use App\Repository\ServiceRepository;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-class GarageController extends AbstractController
+class UserController extends AbstractController
 {
 
-    #[Route('/api/garage', name: 'app_post_garage', methods: ['POST'])]
+    #[Route('/api/user', name: 'app_post_user', methods: ['POST'])]
     public function create(
         Request $request, 
         SerializerInterface $serializer, 
-        ServiceRepository $serviceRepository,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        GarageRepository $garageRepository,
+        UserPasswordHasherInterface $passwordHasher
     ): JsonResponse
     {
+        
+        $user = $serializer->deserialize(
+            $request->getContent(), 
+            User::class, 
+            'json',
+            [AbstractNormalizer::IGNORED_ATTRIBUTES => ['garages']]
+        );
 
         $payload = $this->jwtDecodePayload($request->headers->get('Authorization'));
 
@@ -37,106 +46,74 @@ class GarageController extends AbstractController
             );
         }
 
-        $newGarage = $serializer->deserialize($request->getContent(), 
-            Garage::class, 
-            'json'
-        );
+        $user->setGarage($garageRepository->findOneBy(['raison' => $user->getGarage()->getRaison()]));
 
-        foreach ($newGarage->getServices() as $service) {
-            $serviceInitial = $serviceRepository->find($service->getId());
-            $newGarage->removeService($service);
-            if ($serviceInitial) {
-                $newGarage->addService($serviceInitial);
-            }
-        }
-        
-        $em->persist($newGarage);
+        $user->setPassword($passwordHasher->hashPassword(
+            $user,
+            $user->getPassword()
+        ));
+
+        $em->persist($user);
         $em->flush();
 
-        return $this->json([
-            'message' => 'garage created!'
-        ]);
-
-    }
-    
-    #[Route('/api/garage', name: 'app_get_garage', methods: ['GET'])]
-    public function findAll(
-        Request $request, 
-        GarageRepository $garageRepository, 
-        SerializerInterface $serializer): JsonResponse
-    {
-
-        $payload = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if (!in_array("ROLE_ADMIN", $payload->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-                true
-            );
-        }
-
-        $garages = $serializer->serialize(
-            $garageRepository->findAll(),
-            'json', 
-            [
-                'circular_reference_handler' => function ($object) {
-                    return $object->getId();
-                },
-                AbstractNormalizer::IGNORED_ATTRIBUTES => ['services', 'contacts', 'users', 'cars', 'comments'],
-            ]);
-
         return new JsonResponse(
-            $garages, 
+            ['message' => 'user created!'],
             Response::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
-            true
         );
-  
+    
     }
     
-    #[Route('/api/garage/{id}', name: 'app_get_garage_id', methods: ['GET'])]
-    public function find(
+    #[Route('/api/user', name: 'app_get_user', methods: ['GET'])]
+    public function findAll(
         Request $request, 
-        Garage $garage, 
+        UserRepository $userRepository, 
         SerializerInterface $serializer
     ): JsonResponse
     {
 
-        $garages = $serializer->serialize(
-            $garage,
+        $payload = $this->jwtDecodePayload($request->headers->get('Authorization'));
+
+        if (!in_array("ROLE_ADMIN", $payload->roles)) {
+            return new JsonResponse(
+                ['message' => 'user non habilité !'],
+                Response::HTTP_UNAUTHORIZED, 
+                ['Content-Type' => 'application/json;charset=UTF-8'], 
+                true
+            );
+        }
+
+        $users = $serializer->serialize(
+            $userRepository->findAll(),
             'json', 
             [
                 'circular_reference_handler' => function ($object) {
                     return $object->getId();
                 },
-                AbstractNormalizer::IGNORED_ATTRIBUTES => ['services', 'contacts', 'users', 'cars', 'comments'],
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['garages', 'users', 'contacts', 'users', 'cars', 'comments'],
             ]
         );
 
         return new JsonResponse(
-            $garages, 
+            $users, 
             Response::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
             true
         );
-  
+    
     }
     
-    #[Route('/api/garage/{id}', name: 'app_put_garage_id', methods: ['PUT'])]
-    public function update(
+    #[Route('/api/user/{id}', name: 'app_get_user_id', methods: ['GET'])]
+    public function find(
         Request $request, 
-        Garage $currentGarage, 
-        SerializerInterface $serializer, 
-        EntityManagerInterface $em,
-        ServiceRepository $serviceRepository
+        User $user, 
+        SerializerInterface $serializer
     ): JsonResponse
     {
-        
+
         $payload = $this->jwtDecodePayload($request->headers->get('Authorization'));
 
-        if (!in_array("ROLE_ADMIN", $payload->roles)) {
+        if (!in_array("ROLE_ADMIN", $payload->roles) && $user->getEmail() != $payload->username) {
             return new JsonResponse(
                 ['message' => 'user non habilité !'],
                 Response::HTTP_UNAUTHORIZED, 
@@ -145,58 +122,88 @@ class GarageController extends AbstractController
             );
         }
 
-        $newGarage = $serializer->deserialize($request->getContent(), 
-            Garage::class, 
-            'json'
-        );
-
-        $indexes = [];
-
-        foreach ($newGarage->getServices() as $service) {
-            $serviceInitial = $serviceRepository->find($service->getId());
-            $newGarage->removeService($service);
-            if ($serviceInitial) {
-                $newGarage->addService($serviceInitial);
-            } else {
-                array_push($indexes, $service->getId());
-            }
-        }
-        
-        foreach ($currentGarage->getServices() as $service) {
-            if (!array_key_exists($service->getId(), $indexes)) {
-                $currentGarage->removeService($service);
-            }
-        }
-        
-        $updatedGarage = $serializer->deserialize($request->getContent(), 
-            Garage::class, 
+        $users = $serializer->serialize(
+            $user,
             'json', 
             [
-                AbstractNormalizer::OBJECT_TO_POPULATE => $currentGarage,
-                AbstractNormalizer::IGNORED_ATTRIBUTES => ['services']
+                'circular_reference_handler' => function ($object) {
+                    return $object->getId();
+                },
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['users', 'contacts', 'users', 'cars', 'comments'],
+            ]
+        );
+
+        return new JsonResponse(
+            $users, 
+            Response::HTTP_OK, 
+            ['Content-Type' => 'application/json;charset=UTF-8'], 
+            true
+        );
+    
+    }
+    
+    #[Route('/api/user/{id}', name: 'ap_put_user_id', methods: ['PUT'])]
+    public function update(
+        Request $request, 
+        User $currentUser, 
+        SerializerInterface $serializer, 
+        EntityManagerInterface $em,
+        GarageRepository $garageRepository,
+        UserPasswordHasherInterface $passwordHasher
+    ): JsonResponse
+    {
+
+        $email = $currentUser->getEmail();
+
+        $updatedUser = $serializer->deserialize(
+            $request->getContent(), 
+            User::class, 
+            'json', 
+            [
+                AbstractNormalizer::OBJECT_TO_POPULATE => $currentUser,
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['garages']
             ]
         );
         
-        foreach($newGarage->getServices() as $service) {
-            $updatedGarage->addService($service);
+        $payload = $this->jwtDecodePayload($request->headers->get('Authorization'));
+
+        if (!in_array("ROLE_ADMIN", $payload->roles) && $updatedUser->getEmail() != $payload->username) {
+            return new JsonResponse(
+                ['message' => 'user non habilité !'],
+                Response::HTTP_UNAUTHORIZED, 
+                ['Content-Type' => 'application/json;charset=UTF-8'], 
+                true
+            );
         }
-    
-        $em->persist($updatedGarage);
+
+        if (!in_array("ROLE_ADMIN", $payload->roles)) {
+            $updatedUser->setEmail($email);
+        }
+
+        $updatedUser->setGarage($garageRepository->findOneBy(['raison' => $updatedUser->getGarage()->getRaison()]));
+
+        $updatedUser->setPassword($passwordHasher->hashPassword(
+            $updatedUser,
+            $updatedUser->getPassword()
+        ));
+
+        $em->persist($updatedUser);
         $em->flush();
 
-        return $this->json(['message' => 'garage modified!'], 
+        return $this->json(
+            ['message' => 'user modified!'], 
             JsonResponse::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
         );
-  
+
     }
     
-    #[Route('/api/garage/{id}', name: 'app_delete_garage_id', methods: ['DELETE'])]
+    #[Route('/api/user/{id}', name: 'app_delete_user_id', methods: ['DELETE'])]
     public function delete(
-        Request $request, 
-        Garage $garage, 
+        Request $request,
+        User $user, 
         EntityManagerInterface $em
-        ): JsonResponse
+    ): JsonResponse
     {
 
         $payload = $this->jwtDecodePayload($request->headers->get('Authorization'));
@@ -210,16 +217,18 @@ class GarageController extends AbstractController
             );
         }
 
-        $em->remove($garage);
+        $em->remove($user);
         $em->flush();
 
-        return $this->json(['message' => 'garage deleted!'], 
+        return $this->json([
+            'message' => 'user deleted!'
+            ], 
             JsonResponse::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
         );
-  
-    }
     
+    }
+
     public function jwtDecodePayload (string $jwt) 
     {
         $tokenPayload = base64_decode(explode('.', str_replace(
