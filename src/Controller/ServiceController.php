@@ -36,7 +36,13 @@ class ServiceController extends AbstractController
 
         $services = $serializer->serialize(
             $serviceRepository->findAll(),
-            'json'
+            'json', 
+            [
+                'circular_reference_handler' => function ($object) {
+                    return $object->getId();
+                },
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['garages', 'services', 'contacts', 'users', 'cars', 'comments'],
+            ]
         );
 
         return new JsonResponse(
@@ -54,7 +60,13 @@ class ServiceController extends AbstractController
 
         $services = $serializer->serialize(
             $service,
-            'json'
+            'json', 
+            [
+                'circular_reference_handler' => function ($object) {
+                    return $object->getId();
+                },
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['services', 'contacts', 'users', 'cars', 'comments'],
+            ]
         );
 
         return new JsonResponse(

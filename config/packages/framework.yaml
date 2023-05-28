@@ -18,6 +18,10 @@ framework:
     php_errors:
         log: true
 
+    serializer:
+        enabled: true
+#        circular_limit: 2
+
 when@test:
     framework:
         test: true

@@ -14,7 +14,7 @@ class Service
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    public ?int $id = null;
 
     #[ORM\Column(length: 255)]
     private ?string $name = null;
@@ -22,15 +22,11 @@ class Service
     #[ORM\Column(type: Types::TEXT)]
     private ?string $description = null;
 
-    #[ORM\ManyToMany(targetEntity: Garage::class, mappedBy: 'services')]
-    private Collection $garages;
-
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
     private ?Image $image = null;
 
     public function __construct()
     {
-        $this->garages = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -62,33 +58,6 @@ class Service
         return $this;
     }
 
-    /**
-     * @return Collection<int, Garage>
-     */
-    public function getGarages(): Collection
-    {
-        return $this->garages;
-    }
-
-    public function addGarage(Garage $garage): self
-    {
-        if (!$this->garages->contains($garage)) {
-            $this->garages->add($garage);
-            $garage->addService($this);
-        }
-
-        return $this;
-    }
-
-    public function removeGarage(Garage $garage): self
-    {
-        if ($this->garages->removeElement($garage)) {
-            $garage->removeService($this);
-        }
-
-        return $this;
-    }
-
     public function getImage(): ?Image
     {
         return $this->image;
@@ -100,4 +69,19 @@ class Service
 
         return $this;
     }
+
+    public function __toString() 
+    {
+
+        $retour = "========================================> Service :\n";
+
+        $retour = $retour."Id          : ".$this->getId()."\n";
+        $retour = $retour."Name        : ".$this->getName()."\n";
+        $retour = $retour."Description : ".$this->getDescription()."\n";
+        $retour = $retour."Image       : ".$this->getImage()."\n";
+
+        return $retour;
+
+    }
+
 }

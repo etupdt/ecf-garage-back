@@ -63,7 +63,7 @@ class Garage
     #[ORM\OneToMany(mappedBy: 'garage', targetEntity: Car::class, orphanRemoval: true)]
     private Collection $cars;
 
-    #[ORM\ManyToMany(targetEntity: Service::class, inversedBy: 'garages')]
+    #[ORM\ManyToMany(targetEntity: Service::class, cascade: ['persist'])]
     private Collection $services;
 
     #[ORM\OneToMany(mappedBy: 'garage', targetEntity: User::class)]
@@ -382,4 +382,18 @@ class Garage
 
         return $this;
     }
+
+    public function __toString() 
+    {
+
+        $retour = "========================================> Garage :\n";
+
+        foreach($this->getServices() as $service) {
+            $retour = $retour."Service : ".$service->getId()." - ".$service->getName()."\n";
+        }
+
+        return $retour;
+
+    }
+
 }

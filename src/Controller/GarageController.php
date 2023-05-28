@@ -6,22 +6,40 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Entity\Garage;
+use App\Entity\Service;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface ;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\HttpFoundation\Response;
 use App\Repository\GarageRepository;
+use App\Repository\ServiceRepository;
 
 class GarageController extends AbstractController
 {
 
     #[Route('/api/garage', name: 'app_post_garage', methods: ['POST'])]
-    public function create(Request $request, SerializerInterface $serializer, EntityManagerInterface $em): JsonResponse
+    public function create(Request $request, 
+        SerializerInterface $serializer, 
+        ServiceRepository $serviceRepository,
+        EntityManagerInterface $em
+    ): JsonResponse
     {
 
-        $garage = $serializer->deserialize($request->getContent(), Garage::class, 'json');
-        $em->persist($garage);
+        $newGarage = $serializer->deserialize($request->getContent(), 
+            Garage::class, 
+            'json'
+        );
+
+        foreach ($newGarage->getServices() as $service) {
+            $serviceInitial = $serviceRepository->find($service->getId());
+            $newGarage->removeService($service);
+            if ($serviceInitial) {
+                $newGarage->addService($serviceInitial);
+            }
+        }
+        
+        $em->persist($newGarage);
         $em->flush();
 
         return $this->json([
@@ -79,23 +97,54 @@ class GarageController extends AbstractController
     
     #[Route('/api/garage/{id}', name: 'app_put_garage_id', methods: ['PUT'])]
     public function update(Request $request, 
-                            Garage $currentGarage, 
-                            SerializerInterface $serializer, 
-                            EntityManagerInterface $em
-        ): JsonResponse
+        Garage $currentGarage, 
+        SerializerInterface $serializer, 
+        EntityManagerInterface $em,
+        GarageRepository $garageRepository,
+        ServiceRepository $serviceRepository
+    ): JsonResponse
     {
-
-        $updatedGarage = $serializer->deserialize($request->getContent(), 
-                Garage::class, 
-                'json', 
-                [AbstractNormalizer::OBJECT_TO_POPULATE => $currentGarage]);
         
+        $newGarage = $serializer->deserialize($request->getContent(), 
+            Garage::class, 
+            'json'
+        );
+
+        $indexes = [];
+
+        foreach ($newGarage->getServices() as $service) {
+            $serviceInitial = $serviceRepository->find($service->getId());
+            $newGarage->removeService($service);
+            if ($serviceInitial) {
+                $newGarage->addService($serviceInitial);
+            } else {
+                array_push($indexes, $service->getId());
+            }
+        }
+        
+        foreach ($currentGarage->getServices() as $service) {
+            if (!array_key_exists($service->getId(), $indexes)) {
+                $currentGarage->removeService($service);
+            }
+        }
+        
+        $updatedGarage = $serializer->deserialize($request->getContent(), 
+            Garage::class, 
+            'json', 
+            [
+                AbstractNormalizer::OBJECT_TO_POPULATE => $currentGarage,
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['services']
+            ]
+        );
+        
+        foreach($newGarage->getServices() as $service) {
+            $updatedGarage->addService($service);
+        }
+    
         $em->persist($updatedGarage);
         $em->flush();
 
-        return $this->json([
-            'message' => 'garage modified!'
-            ], 
+        return $this->json(['message' => 'garage modified!'], 
             JsonResponse::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
         );
@@ -111,9 +160,7 @@ class GarageController extends AbstractController
         $em->remove($garage);
         $em->flush();
 
-        return $this->json([
-            'message' => 'garage deleted!'
-            ], 
+        return $this->json(['message' => 'garage deleted!'], 
             JsonResponse::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
         );
