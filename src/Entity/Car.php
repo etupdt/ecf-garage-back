@@ -27,17 +27,17 @@ class Car
     #[ORM\ManyToMany(targetEntity: Option::class, inversedBy: 'features')]
     private Collection $options;
 
-    #[ORM\OneToMany(mappedBy: 'car', targetEntity: Feature::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'car', targetEntity: Feature::class, orphanRemoval: true, cascade: ['persist'])]
     private Collection $features;
 
-    #[ORM\ManyToOne(inversedBy: 'cars')]
+    #[ORM\ManyToOne(inversedBy: 'cars', cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?Garage $garage = null;
 
-    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(cascade: ['persist'])]
     private ?Image $image = null;
 
-    #[ORM\OneToMany(mappedBy: 'car', targetEntity: Image::class)]
+    #[ORM\OneToMany(mappedBy: 'car', targetEntity: Image::class, cascade: ['persist'])]
     private Collection $images;
 
     public function __construct()

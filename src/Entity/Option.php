@@ -15,7 +15,7 @@ class Option
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    public ?int $id = null;
 
     #[ORM\Column(length: 255)]
     private ?string $name = null;
@@ -23,12 +23,8 @@ class Option
     #[ORM\Column(type: Types::TEXT)]
     private ?string $description = null;
 
-    #[ORM\ManyToMany(targetEntity: Car::class, mappedBy: 'options')]
-    private Collection $features;
-
     public function __construct()
     {
-        $this->features = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -60,30 +56,4 @@ class Option
         return $this;
     }
 
-    /**
-     * @return Collection<int, Car>
-     */
-    public function getFeatures(): Collection
-    {
-        return $this->features;
-    }
-
-    public function addFeature(Car $feature): self
-    {
-        if (!$this->features->contains($feature)) {
-            $this->features->add($feature);
-            $feature->addOption($this);
-        }
-
-        return $this;
-    }
-
-    public function removeFeature(Car $feature): self
-    {
-        if ($this->features->removeElement($feature)) {
-            $feature->removeOption($this);
-        }
-
-        return $this;
-    }
 }

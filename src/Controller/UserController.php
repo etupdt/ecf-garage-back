@@ -35,9 +35,9 @@ class UserController extends AbstractController
             [AbstractNormalizer::IGNORED_ATTRIBUTES => ['garages']]
         );
 
-        $payload = $this->jwtDecodePayload($request->headers->get('Authorization'));
+        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
 
-        if (!in_array("ROLE_ADMIN", $payload->roles)) {
+        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles)) {
             return new JsonResponse(
                 ['message' => 'user non habilité !'],
                 Response::HTTP_UNAUTHORIZED, 
@@ -72,9 +72,9 @@ class UserController extends AbstractController
     ): JsonResponse
     {
 
-        $payload = $this->jwtDecodePayload($request->headers->get('Authorization'));
+        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
 
-        if (!in_array("ROLE_ADMIN", $payload->roles)) {
+        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles)) {
             return new JsonResponse(
                 ['message' => 'user non habilité !'],
                 Response::HTTP_UNAUTHORIZED, 
@@ -111,9 +111,9 @@ class UserController extends AbstractController
     ): JsonResponse
     {
 
-        $payload = $this->jwtDecodePayload($request->headers->get('Authorization'));
+        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
 
-        if (!in_array("ROLE_ADMIN", $payload->roles) && $user->getEmail() != $payload->username) {
+        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles) && $user->getEmail() != $bearer->username) {
             return new JsonResponse(
                 ['message' => 'user non habilité !'],
                 Response::HTTP_UNAUTHORIZED, 
@@ -165,9 +165,9 @@ class UserController extends AbstractController
             ]
         );
         
-        $payload = $this->jwtDecodePayload($request->headers->get('Authorization'));
+        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
 
-        if (!in_array("ROLE_ADMIN", $payload->roles) && $updatedUser->getEmail() != $payload->username) {
+        if ($bearer == null || (!in_array("ROLE_ADMIN", $bearer->roles) && $updatedUser->getEmail() != $bearer->username)) {
             return new JsonResponse(
                 ['message' => 'user non habilité !'],
                 Response::HTTP_UNAUTHORIZED, 
@@ -176,7 +176,7 @@ class UserController extends AbstractController
             );
         }
 
-        if (!in_array("ROLE_ADMIN", $payload->roles)) {
+        if (!in_array("ROLE_ADMIN", $bearer->roles)) {
             $updatedUser->setEmail($email);
         }
 
@@ -206,9 +206,9 @@ class UserController extends AbstractController
     ): JsonResponse
     {
 
-        $payload = $this->jwtDecodePayload($request->headers->get('Authorization'));
+        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
 
-        if (!in_array("ROLE_ADMIN", $payload->roles)) {
+        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles)) {
             return new JsonResponse(
                 ['message' => 'user non habilité !'],
                 Response::HTTP_UNAUTHORIZED, 

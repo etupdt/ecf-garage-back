@@ -26,9 +26,9 @@ class GarageController extends AbstractController
     ): JsonResponse
     {
 
-        $payload = $this->jwtDecodePayload($request->headers->get('Authorization'));
+        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
 
-        if (!in_array("ROLE_ADMIN", $payload->roles)) {
+        if (!in_array("ROLE_ADMIN", $bearer->roles)) {
             return new JsonResponse(
                 ['message' => 'user non habilité !'],
                 Response::HTTP_UNAUTHORIZED, 
@@ -66,9 +66,9 @@ class GarageController extends AbstractController
         SerializerInterface $serializer): JsonResponse
     {
 
-        $payload = $this->jwtDecodePayload($request->headers->get('Authorization'));
+        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
 
-        if (!in_array("ROLE_ADMIN", $payload->roles)) {
+        if (!in_array("ROLE_ADMIN", $bearer->roles)) {
             return new JsonResponse(
                 ['message' => 'user non habilité !'],
                 Response::HTTP_UNAUTHORIZED, 
@@ -134,9 +134,9 @@ class GarageController extends AbstractController
     ): JsonResponse
     {
         
-        $payload = $this->jwtDecodePayload($request->headers->get('Authorization'));
+        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
 
-        if (!in_array("ROLE_ADMIN", $payload->roles)) {
+        if (!in_array("ROLE_ADMIN", $bearer->roles)) {
             return new JsonResponse(
                 ['message' => 'user non habilité !'],
                 Response::HTTP_UNAUTHORIZED, 
@@ -199,9 +199,9 @@ class GarageController extends AbstractController
         ): JsonResponse
     {
 
-        $payload = $this->jwtDecodePayload($request->headers->get('Authorization'));
+        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
 
-        if (!in_array("ROLE_ADMIN", $payload->roles)) {
+        if (!in_array("ROLE_ADMIN", $bearer->roles)) {
             return new JsonResponse(
                 ['message' => 'user non habilité !'],
                 Response::HTTP_UNAUTHORIZED, 

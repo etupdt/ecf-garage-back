@@ -5,18 +5,18 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
-use App\Entity\Service;
+use App\Entity\Contact;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface ;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\HttpFoundation\Response;
-use App\Repository\ServiceRepository;
+use App\Repository\ContactRepository;
 
-class ServiceController extends AbstractController
+class ContactController extends AbstractController
 {
 
-    #[Route('/api/service', name: 'app_post_service', methods: ['POST'])]
+    #[Route('/api/contact', name: 'app_post_contact', methods: ['POST'])]
     public function create(
         Request $request, 
         SerializerInterface $serializer, 
@@ -24,47 +24,36 @@ class ServiceController extends AbstractController
     ): JsonResponse
     {
 
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-                true
-            );
-        }
-
-        $service = $serializer->deserialize($request->getContent(), Service::class, 'json');
-        $em->persist($service);
+        $contact = $serializer->deserialize($request->getContent(), Contact::class, 'json');
+        $em->persist($contact);
         $em->flush();
 
         return $this->json([
-            'message' => 'service created!'
+            'message' => 'contact created!'
         ]);
 
     }
     
-    #[Route('/api/service', name: 'app_get_service', methods: ['GET'])]
+    #[Route('/api/contact', name: 'app_get_contact', methods: ['GET'])]
     public function findAll(
-        ServiceRepository $serviceRepository, 
+        ContactRepository $contactRepository, 
         SerializerInterface $serializer
     ): JsonResponse
     {
 
-        $services = $serializer->serialize(
-            $serviceRepository->findAll(),
+        $contacts = $serializer->serialize(
+            $contactRepository->findAll(),
             'json', 
             [
                 'circular_reference_handler' => function ($object) {
                     return $object->getId();
                 },
-                AbstractNormalizer::IGNORED_ATTRIBUTES => ['garages'],
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['garages', 'contacts', 'contacts', 'users', 'cars', 'contacts'],
             ]
         );
 
         return new JsonResponse(
-            $services, 
+            $contacts, 
             Response::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
             true
@@ -72,17 +61,17 @@ class ServiceController extends AbstractController
     
     }
     
-    #[Route('/api/service/{id}', name: 'app_get_service_id', methods: ['GET'])]
+    #[Route('/api/contact/{id}', name: 'app_get_contact_id', methods: ['GET'])]
     public function find(
         Request $request, 
-        Service $service, 
+        Contact $contact, 
         SerializerInterface $serializer
     ): JsonResponse
     {
 
         $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
 
-        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles)) {
+        if ($bearer == null || !in_array("ROLE_USER", $bearer->roles)) {
             return new JsonResponse(
                 ['message' => 'user non habilité !'],
                 Response::HTTP_UNAUTHORIZED, 
@@ -91,8 +80,8 @@ class ServiceController extends AbstractController
             );
         }
 
-        $services = $serializer->serialize(
-            $service,
+        $contacts = $serializer->serialize(
+            $contact,
             'json', 
             [
                 'circular_reference_handler' => function ($object) {
@@ -103,7 +92,7 @@ class ServiceController extends AbstractController
         );
 
         return new JsonResponse(
-            $services, 
+            $contacts, 
             Response::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
             true
@@ -111,10 +100,10 @@ class ServiceController extends AbstractController
     
     }
     
-    #[Route('/api/service/{id}', name: 'ap_put_service_id', methods: ['PUT'])]
+    #[Route('/api/contact/{id}', name: 'ap_put_contact_id', methods: ['PUT'])]
     public function update(
         Request $request, 
-        Service $currentService, 
+        Contact $currentContact, 
         SerializerInterface $serializer, 
         EntityManagerInterface $em
     ): JsonResponse
@@ -122,7 +111,7 @@ class ServiceController extends AbstractController
 
         $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
 
-        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles)) {
+        if ($bearer == null || !in_array("ROLE_USER", $bearer->roles)) {
             return new JsonResponse(
                 ['message' => 'user non habilité !'],
                 Response::HTTP_UNAUTHORIZED, 
@@ -131,16 +120,16 @@ class ServiceController extends AbstractController
             );
         }
 
-        $updatedService = $serializer->deserialize($request->getContent(), 
-                Service::class, 
+        $updatedContact = $serializer->deserialize($request->getContent(), 
+                Contact::class, 
                 'json', 
-                [AbstractNormalizer::OBJECT_TO_POPULATE => $currentService]);
+                [AbstractNormalizer::OBJECT_TO_POPULATE => $currentContact]);
         
-        $em->persist($updatedService);
+        $em->persist($updatedContact);
         $em->flush();
 
         return $this->json([
-            'message' => 'service modified!'
+            'message' => 'contact modified!'
             ], 
             JsonResponse::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
@@ -148,17 +137,17 @@ class ServiceController extends AbstractController
     
     }
     
-    #[Route('/api/service/{id}', name: 'app_delete_service_id', methods: ['DELETE'])]
+    #[Route('/api/contact/{id}', name: 'app_delete_contact_id', methods: ['DELETE'])]
     public function delete(
         Request $request, 
-        Service $service, 
+        Contact $contact, 
         EntityManagerInterface $em
     ): JsonResponse
     {
 
         $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
 
-        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles)) {
+        if ($bearer == null || !in_array("ROLE_USER", $bearer->roles)) {
             return new JsonResponse(
                 ['message' => 'user non habilité !'],
                 Response::HTTP_UNAUTHORIZED, 
@@ -167,11 +156,11 @@ class ServiceController extends AbstractController
             );
         }
 
-        $em->remove($service);
+        $em->remove($contact);
         $em->flush();
 
         return $this->json([
-            'message' => 'service deleted!'
+            'message' => 'contact deleted!'
             ], 
             JsonResponse::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
