@@ -40,6 +40,12 @@ class Car
     #[ORM\OneToMany(mappedBy: 'car', targetEntity: Image::class, cascade: ['persist'])]
     private Collection $images;
 
+    #[ORM\Column(length: 255)]
+    private ?string $brand = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $model = null;
+
     public function __construct()
     {
         $this->options = new ArrayCollection();
@@ -192,6 +198,30 @@ class Car
                 $image->setCar(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getBrand(): ?string
+    {
+        return $this->brand;
+    }
+
+    public function setBrand(string $brand): self
+    {
+        $this->brand = $brand;
+
+        return $this;
+    }
+
+    public function getModel(): ?string
+    {
+        return $this->model;
+    }
+
+    public function setModel(string $model): self
+    {
+        $this->model = $model;
 
         return $this;
     }

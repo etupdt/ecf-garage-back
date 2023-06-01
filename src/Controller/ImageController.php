@@ -5,21 +5,22 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
-use App\Entity\Service;
 use App\Entity\Image;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface ;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\HttpFoundation\Response;
-use App\Repository\ServiceRepository;
+use App\Repository\ImageRepository;
 
-class ServiceController extends AbstractController
+class ImageController extends AbstractController
 {
 
-    #[Route('/api/service/{id}', name: 'app_post_service', methods: ['POST'])]
+    #[Route('/api/image', name: 'app_post_image', methods: ['POST'])]
     public function create(
         Request $request, 
+        SerializerInterface $serializer, 
+        ImageRepository $imageRepository, 
         EntityManagerInterface $em
     ): JsonResponse
     {
@@ -40,37 +41,31 @@ class ServiceController extends AbstractController
         $image = new Image();
         $image->setFilename($imageFile->getClientOriginalName());
 
-        $service = new Service();
-        $service->setName($request->get('name'));
-        $service->setDescription($request->get('description'));
-        $service->setImage($image);
-
-        $em->persist($service);
+        $em->persist($image);
         $em->flush();
-
+        
         $imageFile->move(
             $this->getParameter('kernel.project_dir')."/public/images",
-            $service->getImage()->getId().'_'.$imageFile->getClientOriginalName()
+            $image->getId().'_'.$imageFile->getClientOriginalName()
         );
-        
-        return $this->json([
-            $service
-            ], 
-            JsonResponse::HTTP_OK, 
-            ['Content-Type' => 'application/json;charset=UTF-8'], 
+
+        return $this->json(
+            $image, 
+            Response::HTTP_OK, 
+            ['Content-Type' => 'application/json;charset=UTF-8']
         );
-    
+
     }
     
-    #[Route('/api/service', name: 'app_get_service', methods: ['GET'])]
+    #[Route('/api/image', name: 'app_get_image', methods: ['GET'])]
     public function findAll(
-        ServiceRepository $serviceRepository, 
+        ImageRepository $imageRepository, 
         SerializerInterface $serializer
     ): JsonResponse
     {
 
-        $services = $serializer->serialize(
-            $serviceRepository->findAll(),
+        $images = $serializer->serialize(
+            $imageRepository->findAll(),
             'json', 
             [
                 'circular_reference_handler' => function ($object) {
@@ -81,7 +76,7 @@ class ServiceController extends AbstractController
         );
 
         return new JsonResponse(
-            $services, 
+            $images, 
             Response::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
             true
@@ -89,10 +84,10 @@ class ServiceController extends AbstractController
     
     }
     
-    #[Route('/api/service/{id}', name: 'app_get_service_id', methods: ['GET'])]
+    #[Route('/api/image/{id}', name: 'app_get_image_id', methods: ['GET'])]
     public function find(
         Request $request, 
-        Service $service, 
+        Image $image, 
         SerializerInterface $serializer
     ): JsonResponse
     {
@@ -108,8 +103,8 @@ class ServiceController extends AbstractController
             );
         }
 
-        $services = $serializer->serialize(
-            $service,
+        $imageSerialized = $serializer->serialize(
+            $image,
             'json', 
             [
                 'circular_reference_handler' => function ($object) {
@@ -120,7 +115,7 @@ class ServiceController extends AbstractController
         );
 
         return new JsonResponse(
-            $services, 
+            $imageSerialized, 
             Response::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
             true
@@ -128,10 +123,11 @@ class ServiceController extends AbstractController
     
     }
     
-    #[Route('/api/service', name: 'app_put_service_id', methods: ['POST'])]
+    #[Route('/api/image/{id}', name: 'ap_put_image_id', methods: ['PUT'])]
     public function update(
         Request $request, 
-        ServiceRepository $serviceRepository,
+        Image $currentImage, 
+        SerializerInterface $serializer, 
         EntityManagerInterface $em
     ): JsonResponse
     {
@@ -146,27 +142,17 @@ class ServiceController extends AbstractController
                 true
             );
         }
-    
-        $imageFile = $request->files->get('garage_image');
 
-        $image = new Image();
-        $image->setFilename($imageFile->getClientOriginalName());
-
-        $currentService = $serviceRepository->find(intval($request->get('id')));
-        $currentService->setName($request->get('name'));
-        $currentService->setDescription($request->get('description'));
-        $currentService->setImage($image);
-
-        $em->persist($currentService);
+        $updatedImage = $serializer->deserialize($request->getContent(), 
+                Image::class, 
+                'json', 
+                [AbstractNormalizer::OBJECT_TO_POPULATE => $currentImage]);
+        
+        $em->persist($updatedImage);
         $em->flush();
 
-        $imageFile->move(
-            $this->getParameter('kernel.project_dir')."/public/images",
-            $currentService->getImage()->getId().'_'.$imageFile->getClientOriginalName()
-        );
-        
         return $this->json([
-            $currentService
+            'message' => 'image modified!'
             ], 
             JsonResponse::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
@@ -174,10 +160,10 @@ class ServiceController extends AbstractController
     
     }
     
-    #[Route('/api/service/{id}', name: 'app_delete_service_id', methods: ['DELETE'])]
+    #[Route('/api/image/{id}', name: 'app_delete_image_id', methods: ['DELETE'])]
     public function delete(
         Request $request, 
-        Service $service, 
+        Image $image, 
         EntityManagerInterface $em
     ): JsonResponse
     {
@@ -193,11 +179,11 @@ class ServiceController extends AbstractController
             );
         }
 
-        $em->remove($service);
+        $em->remove($image);
         $em->flush();
 
         return $this->json([
-            'message' => 'service deleted!'
+            'message' => 'image deleted!'
             ], 
             JsonResponse::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 

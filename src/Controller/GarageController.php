@@ -173,7 +173,7 @@ class GarageController extends AbstractController
             'json', 
             [
                 AbstractNormalizer::OBJECT_TO_POPULATE => $currentGarage,
-                AbstractNormalizer::IGNORED_ATTRIBUTES => ['services']
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['services', 'cars']
             ]
         );
         
