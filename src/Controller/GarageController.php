@@ -104,6 +104,8 @@ class GarageController extends AbstractController
     ): JsonResponse
     {
 
+        error_log("=================================>".sizeof($garage->getServices()));
+
         $garages = $serializer->serialize(
             $garage,
             'json', 
@@ -111,10 +113,9 @@ class GarageController extends AbstractController
                 'circular_reference_handler' => function ($object) {
                     return $object->getId();
                 },
-                AbstractNormalizer::IGNORED_ATTRIBUTES => ['services', 'contacts', 'users', 'cars', 'comments'],
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['contacts', 'users', 'cars', 'comments'],
             ]
         );
-
         return new JsonResponse(
             $garages, 
             Response::HTTP_OK, 
