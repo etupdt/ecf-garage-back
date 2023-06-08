@@ -24,14 +24,22 @@ class CommentController extends AbstractController
     ): JsonResponse
     {
 
-        $comment = $serializer->deserialize($request->getContent(), Comment::class, 'json');
+        $comment = $serializer->deserialize(
+            $request->getContent(), 
+            Comment::class, 
+            'json'
+        );
+
         $em->persist($comment);
         $em->flush();
 
         return $this->json([
-            'message' => 'comment created!'
-        ]);
-
+            $comment
+            ], 
+            JsonResponse::HTTP_OK, 
+            ['Content-Type' => 'application/json;charset=UTF-8'], 
+        );
+    
     }
     
     #[Route('/api/comment', name: 'app_get_comment', methods: ['GET'])]
@@ -129,12 +137,12 @@ class CommentController extends AbstractController
         $em->flush();
 
         return $this->json([
-            'message' => 'comment modified!'
+            $updatedComment
             ], 
             JsonResponse::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
         );
-    
+        
     }
     
     #[Route('/api/comment/{id}', name: 'app_delete_comment_id', methods: ['DELETE'])]

@@ -59,6 +59,36 @@ class GarageController extends AbstractController
 
     }
     
+    #[Route('/api/garage/raison', name: 'app_post_garage_raison', methods: ['POST'])]
+    public function findByRaison(
+        Request $request, 
+        SerializerInterface $serializer, 
+        GarageRepository $garageRepository,
+        EntityManagerInterface $em
+    ): JsonResponse
+    {
+
+        $garage = $garageRepository->findOneBy(['raison' => $request->toArray()['raison']]);
+        
+        $garageSerialized = $serializer->serialize(
+            $garage,
+            'json', 
+            [
+                'circular_reference_handler' => function ($object) {
+                    return $object->getId();
+                },
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['contacts', 'users', 'cars', 'comments', 'service'],
+            ]
+        );
+        return new JsonResponse(
+            $garageSerialized, 
+            Response::HTTP_OK, 
+            ['Content-Type' => 'application/json;charset=UTF-8'], 
+            true
+        );
+  
+    }
+    
     #[Route('/api/garage', name: 'app_get_garage', methods: ['GET'])]
     public function findAll(
         Request $request, 
@@ -77,7 +107,7 @@ class GarageController extends AbstractController
             );
         }
 
-        $garages = $serializer->serialize(
+        $garagesSerialized = $serializer->serialize(
             $garageRepository->findAll(),
             'json', 
             [
@@ -88,7 +118,7 @@ class GarageController extends AbstractController
             ]);
 
         return new JsonResponse(
-            $garages, 
+            $garagesSerialized, 
             Response::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
             true
@@ -106,7 +136,7 @@ class GarageController extends AbstractController
 
         error_log("=================================>".sizeof($garage->getServices()));
 
-        $garages = $serializer->serialize(
+        $garageSerialized = $serializer->serialize(
             $garage,
             'json', 
             [
@@ -116,8 +146,9 @@ class GarageController extends AbstractController
                 AbstractNormalizer::IGNORED_ATTRIBUTES => ['contacts', 'users', 'cars', 'comments'],
             ]
         );
+        
         return new JsonResponse(
-            $garages, 
+            $garageSerialized, 
             Response::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
             true
@@ -198,7 +229,7 @@ class GarageController extends AbstractController
         Garage $garage, 
         EntityManagerInterface $em
         ): JsonResponse
-    {
+        {
 
         $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
 

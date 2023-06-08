@@ -6,6 +6,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Entity\User;
+use App\Entity\Garage;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Serializer\SerializerInterface;
 use Doctrine\ORM\EntityManagerInterface ;
@@ -13,6 +14,7 @@ use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\HttpFoundation\Response;
 use App\Repository\UserRepository;
 use App\Repository\GarageRepository;
+use phpDocumentor\Reflection\Types\Integer;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class UserController extends AbstractController
@@ -85,6 +87,48 @@ class UserController extends AbstractController
 
         $users = $serializer->serialize(
             $userRepository->findAll(),
+            'json', 
+            [
+                'circular_reference_handler' => function ($object) {
+                    return $object->getId();
+                },
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['garages', 'users', 'contacts', 'users', 'cars', 'comments'],
+            ]
+        );
+
+        return new JsonResponse(
+            $users, 
+            Response::HTTP_OK, 
+            ['Content-Type' => 'application/json;charset=UTF-8'], 
+            true
+        );
+    
+    }
+    
+    #[Route('/api/user/garage/{id}', name: 'app_get_user', methods: ['GET'])]
+    public function findByGarage(
+        Garage $garage,
+        Request $request, 
+        UserRepository $userRepository, 
+        SerializerInterface $serializer
+    ): JsonResponse
+    {
+
+        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
+
+        if ($bearer == null || !in_array("ROLE_USER", $bearer->roles)) {
+            return new JsonResponse(
+                ['message' => 'user non habilité !'],
+                Response::HTTP_UNAUTHORIZED, 
+                ['Content-Type' => 'application/json;charset=UTF-8'], 
+                true
+            );
+        }
+
+        $filtre = in_array("ROLE_ADMIN", $bearer->roles) ? ['garage' => $garage] : ['garage' => $garage, 'email' => $bearer->username];
+
+        $users = $serializer->serialize(
+            $userRepository->findBy($filtre),
             'json', 
             [
                 'circular_reference_handler' => function ($object) {

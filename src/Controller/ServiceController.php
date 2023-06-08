@@ -13,6 +13,7 @@ use Doctrine\ORM\EntityManagerInterface ;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\HttpFoundation\Response;
 use App\Repository\ServiceRepository;
+use Symfony\Component\Filesystem\Filesystem;
 
 class ServiceController extends AbstractController
 {
@@ -39,6 +40,7 @@ class ServiceController extends AbstractController
 
         $image = new Image();
         $image->setFilename($imageFile->getClientOriginalName());
+        $image->setHash($request->get('image_hash'));
 
         $service = new Service();
         $service->setName($request->get('name'));
@@ -132,7 +134,7 @@ class ServiceController extends AbstractController
     public function update(
         Request $request, 
         ServiceRepository $serviceRepository,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
     ): JsonResponse
     {
 
@@ -149,21 +151,32 @@ class ServiceController extends AbstractController
     
         $imageFile = $request->files->get('garage_image');
 
-        $image = new Image();
-        $image->setFilename($imageFile->getClientOriginalName());
-
         $currentService = $serviceRepository->find(intval($request->get('id')));
+        
+        if ($imageFile && $currentService->getImage()->getHash() !== $request->get('image_hash')) {
+
+            $image = new Image();
+            $image->setFilename($imageFile->getClientOriginalName());
+            $image->setHash($request->get('image_hash'));
+            $currentService->setImage($image);
+            
+            $imageFile->move(
+                $this->getParameter('kernel.project_dir')."/public/images",
+                $currentService->getImage()->getId().'_'.$imageFile->getClientOriginalName()
+            );
+
+            $filesystem = new Filesystem();
+            $filesystem->remove(
+                $currentService->getImage()->getId().'_'.$currentService->getImage()->getFilename()
+            );
+
+        }
+
         $currentService->setName($request->get('name'));
         $currentService->setDescription($request->get('description'));
-        $currentService->setImage($image);
 
         $em->persist($currentService);
         $em->flush();
-
-        $imageFile->move(
-            $this->getParameter('kernel.project_dir')."/public/images",
-            $currentService->getImage()->getId().'_'.$imageFile->getClientOriginalName()
-        );
         
         return $this->json([
             $currentService
