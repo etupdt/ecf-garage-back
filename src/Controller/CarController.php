@@ -14,11 +14,15 @@ use Symfony\Component\HttpFoundation\Response;
 use App\Repository\CarRepository;
 use App\Repository\OptionRepository;
 use App\Repository\GarageRepository;
+use App\Repository\ImageRepository;
+use Symfony\Component\Filesystem\Filesystem;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 class CarController extends AbstractController
 {
 
     #[Route('/api/car', name: 'app_post_car', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
     public function create(
         Request $request, 
         SerializerInterface $serializer, 
@@ -28,37 +32,53 @@ class CarController extends AbstractController
     ): JsonResponse
     {
 
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == "" || !in_array("ROLE_USER", $bearer->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-            );
-        }
-
-        $newCar = $serializer->deserialize($request->getContent(), 
+        $content = json_decode($request->get('car'));
+        
+        $newCar = $serializer->deserialize(
+            $request->get('car'), 
             Car::class, 
-            'json'
+            'json',
         );
-
-        foreach ($newCar->getOptions() as $option) {
-            $optionInitial = $optionRepository->find($option->getId());
+        
+        $newCar->setGarage($garageRepository->find($content->garage->id));
+        
+        foreach($newCar->getOptions() as $option) {
+            error_log("=================>".$option->getname());
             $newCar->removeOption($option);
-            if ($optionInitial) {
-                $newCar->addOption($optionInitial);
-            }
         }
-
-        $newCar->setGarage($garageRepository->findOneBy(['raison' => $newCar->getGarage()->getRaison()]));
-
+        foreach($content->options as $option) {
+            $newCar->addOption($optionRepository->find($option->id));
+        }
+    
+        $imageFile = $request->files->get('garage_image');
+        
+        $newCar->getImage()->setFilename($imageFile->getClientOriginalName());
+        
         $em->persist($newCar);
         $em->flush();
 
-        return $this->json([
-            'message' => 'car created!'
-        ]);
+        $imageFile->move(
+            $this->getParameter('kernel.project_dir')."/public/images",
+            'car_'.$newCar->getId().'_'.$imageFile->getClientOriginalName()
+        );    
+        
+        $cars = $serializer->serialize(
+            $newCar,
+            'json', 
+            [
+                'circular_reference_handler' => function ($object) {
+                    return $object->getId();
+                },
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['garage', 'car'],
+            ]
+        );
+
+        return new JsonResponse(
+            $cars, 
+            Response::HTTP_OK, 
+            ['Content-Type' => 'application/json;charset=UTF-8'], 
+            true
+        );
 
     }
 
@@ -97,16 +117,6 @@ class CarController extends AbstractController
     ): JsonResponse
     {
 
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == "" || !in_array("ROLE_USER", $bearer->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-            );
-        }
-
         $cars = $serializer->serialize(
             $car,
             'json', 
@@ -127,89 +137,91 @@ class CarController extends AbstractController
 
     }
     
-    #[Route('/api/car/{id}', name: 'ap_put_car_id', methods: ['PUT'])]
+    #[Route('/api/car/{id}', name: 'ap_put_car_id', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
     public function update(
         Request $request, 
         Car $currentCar, 
         SerializerInterface $serializer, 
+        ImageRepository $imageRepository,
+        GarageRepository $garageRepository,
         OptionRepository $optionRepository,
         EntityManagerInterface $em
     ): JsonResponse
     {
 
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == "" || !in_array("ROLE_USER", $bearer->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilit !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-            );
-        }
-
-        $newCar = $serializer->deserialize($request->getContent(), 
+        $content = json_decode($request->get('car'));
+        
+        $newCar = $serializer->deserialize(
+            $request->get('car'), 
             Car::class, 
-            'json'
+            'json',
+            [AbstractNormalizer::OBJECT_TO_POPULATE => $currentCar]
         );
+        
+        $currentCar->setGarage($garageRepository->find($content->garage->id));
+        
+        foreach($currentCar->getOptions() as $option) {
+            error_log("=================>".$option->getname());
+            $currentCar->removeOption($option);
+        }
+        foreach($content->options as $option) {
+            $currentCar->addOption($optionRepository->find($option->id));
+        }
+    
+        $imageOrigine = $imageRepository->find($content->image->id);
+        $imageFile = $request->files->get('garage_image');
+        
+        if ($imageFile && $imageOrigine->getHash() !== $content->image->hash) {
+            
+            $imageOrigine->setFilename($imageFile->getClientOriginalName());
+            $imageOrigine->setHash($newCar->getImage()->getHash());
+            
+            $imageFile->move(
+                $this->getParameter('kernel.project_dir')."/public/images",
+                'car_'.$imageOrigine->getId().'_'.$imageFile->getClientOriginalName()
+            );
+            
+            $filesystem = new Filesystem();
+            $filesystem->remove(
+                'car_'.$currentCar->getImage()->getId().'_'.$currentCar->getImage()->getFilename()
+            );
 
-        $indexes = [];
-
-        foreach ($newCar->getOptions() as $option) {
-            $optionInitial = $optionRepository->find($option->getId());
-            $newCar->removeOption($option);
-            if ($optionInitial) {
-                $newCar->addOption($optionInitial);
-            } else {
-                array_push($indexes, $option->getId());
-            }
         }
 
-        foreach ($currentCar->getOptions() as $option) {
-            if (!array_key_exists($option->getId(), $indexes)) {
-                $currentCar->removeOption($option);
-            }
-        }
+        $currentCar->setImage($imageOrigine);
 
-        $updatedCar = $serializer->deserialize($request->getContent(), 
-            Car::class, 
+        $em->persist($currentCar);
+        $em->flush();
+
+        $carSerialized = $serializer->serialize(
+            $currentCar,
             'json', 
             [
-                AbstractNormalizer::OBJECT_TO_POPULATE => $currentCar,
-                AbstractNormalizer::IGNORED_ATTRIBUTES => ['options', 'garage']
+                'circular_reference_handler' => function ($object) {
+                    return $object->getId();
+                },
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['garage'],
             ]
         );
 
-        foreach($newCar->getOptions() as $option) {
-            $updatedCar->addOption($option);
-        }
-
-        $em->persist($updatedCar);
-        $em->flush();
-
-        return $this->json(['message' => 'car modified!'], 
-            JsonResponse::HTTP_OK, 
+        return new JsonResponse(
+            $carSerialized, 
+            Response::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
+            true
         );
-    
+
     }
     
     #[Route('/api/car/{id}', name: 'app_delete_car_id', methods: ['DELETE'])]
+    #[IsGranted('ROLE_USER')]
     public function delete(
         Request $request, 
         Car $car, 
         EntityManagerInterface $em
     ): JsonResponse
     {
-
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == "" || !in_array("ROLE_USER", $bearer->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-            );
-        }
 
         foreach ($car->getImages() as $image) {
             $em->remove($image);
@@ -222,24 +234,6 @@ class CarController extends AbstractController
             JsonResponse::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
         );
-
-    }
-
-    public function jwtDecodePayload (string | null $jwt) 
-    {
-
-        if ($jwt != null) {
-
-            $tokenPayload = base64_decode(explode('.', str_replace(
-                "Bearer ",
-                "",
-                $jwt
-            ))[1]);
-            return json_decode($tokenPayload);    
-
-        } 
-
-        return "";
 
     }
 

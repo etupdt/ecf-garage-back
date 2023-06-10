@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\CarRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: CarRepository::class)]
@@ -24,7 +25,7 @@ class Car
     #[ORM\Column]
     private ?int $kilometer = null;
 
-    #[ORM\ManyToMany(targetEntity: Option::class, inversedBy: 'features')]
+    #[ORM\ManyToMany(targetEntity: Option::class, inversedBy: 'features', cascade: ['persist'])]
     private Collection $options;
 
     #[ORM\OneToMany(mappedBy: 'car', targetEntity: Feature::class, orphanRemoval: true, cascade: ['persist'])]
@@ -45,6 +46,9 @@ class Car
 
     #[ORM\Column(length: 255)]
     private ?string $model = null;
+
+    #[ORM\Column(type: Types::TEXT)]
+    private ?string $description = null;
 
     public function __construct()
     {
@@ -97,9 +101,9 @@ class Car
     /**
      * @return Collection<int, Option>
      */
-    public function getOptions(): Collection
+    public function getOptions()
     {
-        return $this->options;
+        return $this->options->getValues();
     }
 
     public function addOption(Option $option): self
@@ -222,6 +226,18 @@ class Car
     public function setModel(string $model): self
     {
         $this->model = $model;
+
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(string $description): self
+    {
+        $this->description = $description;
 
         return $this;
     }

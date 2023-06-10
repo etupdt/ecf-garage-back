@@ -105,7 +105,7 @@ class UserController extends AbstractController
     
     }
     
-    #[Route('/api/user/garage/{id}', name: 'app_get_user', methods: ['GET'])]
+    #[Route('/api/user/garage/{id}', name: 'app_get_user_garage', methods: ['GET'])]
     public function findByGarage(
         Garage $garage,
         Request $request, 

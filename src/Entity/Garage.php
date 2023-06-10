@@ -6,6 +6,7 @@ use App\Repository\GarageRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Core\Annotation\ApiResource;
 
 #[ORM\Entity(repositoryClass: GarageRepository::class)]
 class Garage
@@ -63,7 +64,7 @@ class Garage
     #[ORM\OneToMany(mappedBy: 'garage', targetEntity: Car::class, orphanRemoval: true)]
     private Collection $cars;
 
-    #[ORM\ManyToMany(targetEntity: Service::class, cascade: ['persist'])]
+    #[ORM\ManyToMany(targetEntity: Service::class)]
     private Collection $services;
 
     #[ORM\OneToMany(mappedBy: 'garage', targetEntity: User::class)]
