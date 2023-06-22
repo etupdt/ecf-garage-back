@@ -29,7 +29,7 @@ class Comment
     #[ORM\Column]
     private ?bool $isApproved = null;
 
-    #[ORM\ManyToOne(inversedBy: 'comments')]
+    #[ORM\ManyToOne(inversedBy: 'comments', cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?Garage $garage = null;
 

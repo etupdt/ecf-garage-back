@@ -38,9 +38,22 @@ class OptionController extends AbstractController
         $em->persist($option);
         $em->flush();
 
-        return $this->json([
-            'message' => 'option created!'
-        ]);
+        $returnOption = $serializer->serialize(
+            $option,
+            'json', 
+            [
+                'circular_reference_handler' => function ($object) {
+                    return $object->getId();
+                },
+            ]
+        );
+
+        return new JsonResponse(
+            $returnOption, 
+            Response::HTTP_OK, 
+            ['Content-Type' => 'application/json;charset=UTF-8'], 
+            true
+        );
 
     }
     
@@ -134,19 +147,30 @@ class OptionController extends AbstractController
                 Option::class, 
                 'json', 
                 [AbstractNormalizer::OBJECT_TO_POPULATE => $currentOption]);
-        
+
         $em->persist($updatedOption);
         $em->flush();
 
-        return $this->json([
-            'message' => 'option modified!'
-            ], 
-            JsonResponse::HTTP_OK, 
-            ['Content-Type' => 'application/json;charset=UTF-8'], 
+        $returnOption = $serializer->serialize(
+            $updatedOption,
+            'json', 
+            [
+                'circular_reference_handler' => function ($object) {
+                    return $object->getId();
+                },
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['garage'],
+            ]
         );
-    
+
+        return new JsonResponse(
+            $returnOption, 
+            Response::HTTP_OK, 
+            ['Content-Type' => 'application/json;charset=UTF-8'], 
+            true
+        );
+
     }
-    
+
     #[Route('/api/option/{id}', name: 'app_delete_option_id', methods: ['DELETE'])]
     public function delete(
         Request $request, 
@@ -175,7 +199,7 @@ class OptionController extends AbstractController
             JsonResponse::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
         );
-    
+
     }
 
     public function jwtDecodePayload (string $jwt) 

@@ -17,6 +17,7 @@ use App\Repository\GarageRepository;
 use App\Repository\ImageRepository;
 use Symfony\Component\Filesystem\Filesystem;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 class CarController extends AbstractController
 {
@@ -28,7 +29,8 @@ class CarController extends AbstractController
         SerializerInterface $serializer, 
         EntityManagerInterface $em,
         GarageRepository $garageRepository,
-        OptionRepository $optionRepository
+        OptionRepository $optionRepository,
+        SluggerInterface $slugger
     ): JsonResponse
     {
 
@@ -50,18 +52,38 @@ class CarController extends AbstractController
             $newCar->addOption($optionRepository->find($option->id));
         }
     
-        $imageFile = $request->files->get('garage_image');
+        $imageFile = $request->files->get('car_image');
         
-        $newCar->getImage()->setFilename($imageFile->getClientOriginalName());
+        $safeFileName = $slugger->slug($imageFile->getClientOriginalName());
+        $newFilename = $safeFileName.'-'.uniqid().'.'.$imageFile->guessExtension();
         
-        $em->persist($newCar);
-        $em->flush();
+        $newCar->getImage()->setFilename($newFilename);
 
         $imageFile->move(
             $this->getParameter('kernel.project_dir')."/public/images",
-            'car_'.$newCar->getId().'_'.$imageFile->getClientOriginalName()
-        );    
-        
+            $newFilename
+        );
+
+        foreach($newCar->getImages() as $imageOrigine) {
+
+            $imageFile = $request->files->get($imageOrigine->getFilename().'_image');    
+
+            $safeFileName = $slugger->slug($imageFile->getClientOriginalName());
+            $newFilename = $safeFileName.'-'.uniqid().'.'.$imageFile->guessExtension();
+
+            $imageOrigine->setFilename($newFilename);
+            $imageOrigine->setCar($newCar);
+
+            $imageFile->move(
+                $this->getParameter('kernel.project_dir')."/public/images",
+                $newFilename
+            );    
+    
+        }
+
+        $em->persist($newCar);
+        $em->flush();
+
         $cars = $serializer->serialize(
             $newCar,
             'json', 
@@ -140,56 +162,104 @@ class CarController extends AbstractController
     #[Route('/api/car/{id}', name: 'ap_put_car_id', methods: ['POST'])]
     #[IsGranted('ROLE_USER')]
     public function update(
-        Request $request, 
-        Car $currentCar, 
-        SerializerInterface $serializer, 
+        Request $request,
+        Car $currentCar,
+        SerializerInterface $serializer,
         ImageRepository $imageRepository,
         GarageRepository $garageRepository,
         OptionRepository $optionRepository,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        SluggerInterface $slugger
     ): JsonResponse
     {
 
         $content = json_decode($request->get('car'));
+
+        $filesystem = new Filesystem();
         
+        foreach($currentCar->getImages() as $image) {
+//            $currentCar->removeImage($image);
+            $toKeep= false;
+            foreach ($content->images as $imageContent) {
+                if ($image->getFilename() === $imageContent->filename) {
+                    $toKeep = true;
+                    break;
+                }
+            }
+            if (! $toKeep) {
+                $filesystem->remove(
+                    $this->getParameter('kernel.project_dir')."/public/images/".$image->getFilename()
+                );
+            }
+        }
+
+//        $em->persist($currentCar);
+//        $em->flush();
+
         $newCar = $serializer->deserialize(
-            $request->get('car'), 
-            Car::class, 
+            $request->get('car'),
+            Car::class,
             'json',
-            [AbstractNormalizer::OBJECT_TO_POPULATE => $currentCar]
+            [
+                AbstractNormalizer::OBJECT_TO_POPULATE => $currentCar,
+//                AbstractNormalizer::IGNORED_ATTRIBUTES => ['garage', 'car']
+            ]
         );
-        
+
         $currentCar->setGarage($garageRepository->find($content->garage->id));
-        
+
         foreach($currentCar->getOptions() as $option) {
-            error_log("=================>".$option->getname());
             $currentCar->removeOption($option);
         }
         foreach($content->options as $option) {
             $currentCar->addOption($optionRepository->find($option->id));
         }
-    
+
         $imageOrigine = $imageRepository->find($content->image->id);
-        $imageFile = $request->files->get('garage_image');
-        
+        $imageFile = $request->files->get('car_image');
+
         if ($imageFile && $imageOrigine->getHash() !== $content->image->hash) {
-            
-            $imageOrigine->setFilename($imageFile->getClientOriginalName());
-            $imageOrigine->setHash($newCar->getImage()->getHash());
-            
-            $imageFile->move(
-                $this->getParameter('kernel.project_dir')."/public/images",
-                'car_'.$imageOrigine->getId().'_'.$imageFile->getClientOriginalName()
-            );
-            
+
             $filesystem = new Filesystem();
             $filesystem->remove(
-                'car_'.$currentCar->getImage()->getId().'_'.$currentCar->getImage()->getFilename()
+                $this->getParameter('kernel.project_dir')."/public/images/".$currentCar->getImage()->getFilename()
             );
+
+            $safeFileName = $slugger->slug($imageFile->getClientOriginalName());
+            $newFilename = $safeFileName.'-'.uniqid().'.'.$imageFile->guessExtension();
+
+            $imageOrigine->setHash($newCar->getImage()->getHash());
+            $imageOrigine->setFilename($newFilename);
+
+            $imageFile->move(
+                $this->getParameter('kernel.project_dir')."/public/images",
+                $newFilename
+            );    
 
         }
 
         $currentCar->setImage($imageOrigine);
+
+        foreach($currentCar->getImages() as $imageOrigine) {
+
+            $imageFile = $request->files->get($imageOrigine->getFilename().'_image');    
+
+            if ($imageFile) {
+                $safeFileName = $slugger->slug($imageFile->getClientOriginalName());
+                $newFilename = $safeFileName.'-'.uniqid().'.'.$imageFile->guessExtension();
+                $imageFile->move(
+                    $this->getParameter('kernel.project_dir')."/public/images",
+                    $newFilename
+                );
+            } else {
+                $newFilename = $imageOrigine->getFilename();
+            }
+
+            $imageOrigine->setFilename($newFilename);
+            $imageOrigine->setHash($imageOrigine->getHash());
+            $imageOrigine->setCar($currentCar);
+
+        }
 
         $em->persist($currentCar);
         $em->flush();
@@ -223,11 +293,18 @@ class CarController extends AbstractController
     ): JsonResponse
     {
 
+        $filesystem = new Filesystem();
+
         foreach ($car->getImages() as $image) {
             $em->remove($image);
+            $filesystem->remove($this->getParameter('kernel.project_dir')."/public/images/".$image->getFilename());
         }
         $em->flush();
+
+        $em->remove($car->getImage());
         $em->remove($car);
+        $filesystem->remove($this->getParameter('kernel.project_dir')."/public/images/".$car->getImage()->getFilename());
+
         $em->flush();
 
         return $this->json(['message' => 'car deleted!'], 

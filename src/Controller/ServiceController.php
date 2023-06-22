@@ -14,32 +14,27 @@ use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\HttpFoundation\Response;
 use App\Repository\ServiceRepository;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\String\Slugger\SluggerInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 class ServiceController extends AbstractController
 {
 
     #[Route('/api/service/{id}', name: 'app_post_service', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function create(
         Request $request, 
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        SluggerInterface $slugger
     ): JsonResponse
     {
-
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-                true
-            );
-        }
 
         $imageFile = $request->files->get('garage_image');
 
         $image = new Image();
-        $image->setFilename($imageFile->getClientOriginalName());
+        $safeFileName = $slugger->slug($imageFile->getClientOriginalName());
+        $newFilename = $safeFileName.'-'.uniqid().'.'.$imageFile->guessExtension();
+        $image->setFilename($newFilename);
         $image->setHash($request->get('image_hash'));
 
         $service = new Service();
@@ -52,7 +47,7 @@ class ServiceController extends AbstractController
 
         $imageFile->move(
             $this->getParameter('kernel.project_dir')."/public/images",
-            $service->getImage()->getId().'_'.$imageFile->getClientOriginalName()
+            $newFilename
         );
         
         return $this->json([
@@ -92,23 +87,13 @@ class ServiceController extends AbstractController
     }
     
     #[Route('/api/service/{id}', name: 'app_get_service_id', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function find(
         Request $request, 
         Service $service, 
         SerializerInterface $serializer
     ): JsonResponse
     {
-
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-                true
-            );
-        }
 
         $services = $serializer->serialize(
             $service,
@@ -131,44 +116,37 @@ class ServiceController extends AbstractController
     }
     
     #[Route('/api/service', name: 'app_put_service_id', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function update(
         Request $request, 
         ServiceRepository $serviceRepository,
         EntityManagerInterface $em,
+        SluggerInterface $slugger
     ): JsonResponse
     {
 
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-                true
-            );
-        }
-    
         $imageFile = $request->files->get('garage_image');
 
         $currentService = $serviceRepository->find(intval($request->get('id')));
         
         if ($imageFile && $currentService->getImage()->getHash() !== $request->get('image_hash')) {
+            
+            $filesystem = new Filesystem();
+            $filesystem->remove(
+                $this->getParameter('kernel.project_dir')."/public/images/".$currentService->getImage()->getFilename()
+            );
 
             $image = new Image();
-            $image->setFilename($imageFile->getClientOriginalName());
+            $safeFileName = $slugger->slug($imageFile->getClientOriginalName());
+            $newFilename = $safeFileName.'-'.uniqid().'.'.$imageFile->guessExtension();
+            $image->setFilename($newFilename);
             $image->setHash($request->get('image_hash'));
             $currentService->setImage($image);
             
             $imageFile->move(
                 $this->getParameter('kernel.project_dir')."/public/images",
-                $currentService->getImage()->getId().'_'.$imageFile->getClientOriginalName()
-            );
-
-            $filesystem = new Filesystem();
-            $filesystem->remove(
-                $currentService->getImage()->getId().'_'.$currentService->getImage()->getFilename()
-            );
+                $newFilename
+            );    
 
         }
 
@@ -188,23 +166,13 @@ class ServiceController extends AbstractController
     }
     
     #[Route('/api/service/{id}', name: 'app_delete_service_id', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function delete(
         Request $request, 
         Service $service, 
         EntityManagerInterface $em
     ): JsonResponse
     {
-
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-                true
-            );
-        }
 
         $em->remove($service);
         $em->flush();
@@ -216,16 +184,6 @@ class ServiceController extends AbstractController
             ['Content-Type' => 'application/json;charset=UTF-8'], 
         );
     
-    }
-
-    public function jwtDecodePayload (string $jwt) 
-    {
-        $tokenPayload = base64_decode(explode('.', str_replace(
-            "Bearer ",
-            "",
-            $jwt
-        ))[1]);
-        return json_decode($tokenPayload);        
     }
 
 }

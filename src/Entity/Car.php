@@ -38,7 +38,7 @@ class Car
     #[ORM\OneToOne(cascade: ['persist'])]
     private ?Image $image = null;
 
-    #[ORM\OneToMany(mappedBy: 'car', targetEntity: Image::class, cascade: ['persist'])]
+    #[ORM\OneToMany(mappedBy: 'car', targetEntity: Image::class, orphanRemoval: true, cascade: ['persist', 'remove'])]
     private Collection $images;
 
     #[ORM\Column(length: 255)]
@@ -125,9 +125,9 @@ class Car
     /**
      * @return Collection<int, Feature>
      */
-    public function getFeatures(): Collection
+    public function getFeatures()
     {
-        return $this->features;
+        return $this->features->getValues();
     }
 
     public function addFeature(Feature $feature): self
@@ -179,9 +179,9 @@ class Car
     /**
      * @return Collection<int, Image>
      */
-    public function getImages(): Collection
+    public function getImages()
     {
-        return $this->images;
+        return $this->images->getValues();
     }
 
     public function addImage(Image $image): self
