@@ -178,7 +178,6 @@ class CarController extends AbstractController
         $filesystem = new Filesystem();
         
         foreach($currentCar->getImages() as $image) {
-//            $currentCar->removeImage($image);
             $toKeep= false;
             foreach ($content->images as $imageContent) {
                 if ($image->getFilename() === $imageContent->filename) {
@@ -192,9 +191,6 @@ class CarController extends AbstractController
                 );
             }
         }
-
-//        $em->persist($currentCar);
-//        $em->flush();
 
         $newCar = $serializer->deserialize(
             $request->get('car'),
@@ -218,12 +214,12 @@ class CarController extends AbstractController
         $imageOrigine = $imageRepository->find($content->image->id);
         $imageFile = $request->files->get('car_image');
 
-        if ($imageFile && $imageOrigine->getHash() !== $content->image->hash) {
+        if ($imageFile) { //} && $imageOrigine->getHash() !== $content->image->hash) {
 
-            $filesystem = new Filesystem();
+/*            $filesystem = new Filesystem();
             $filesystem->remove(
                 $this->getParameter('kernel.project_dir')."/public/images/".$currentCar->getImage()->getFilename()
-            );
+            );*/
 
             $safeFileName = $slugger->slug($imageFile->getClientOriginalName());
             $newFilename = $safeFileName.'-'.uniqid().'.'.$imageFile->guessExtension();
