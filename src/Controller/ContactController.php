@@ -12,6 +12,8 @@ use Doctrine\ORM\EntityManagerInterface ;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\HttpFoundation\Response;
 use App\Repository\ContactRepository;
+use App\Entity\Garage;
+use App\Repository\GarageRepository;
 
 class ContactController extends AbstractController
 {
@@ -20,17 +22,49 @@ class ContactController extends AbstractController
     public function create(
         Request $request, 
         SerializerInterface $serializer, 
+        GarageRepository $garageRepository, 
         EntityManagerInterface $em
     ): JsonResponse
     {
 
-        $contact = $serializer->deserialize($request->getContent(), Contact::class, 'json');
+        $content = json_decode($request->getContent());
+        $garage = $garageRepository->find($content->garage->id);
+
+        $contact = $serializer->deserialize(
+            $request->getContent(), 
+            Contact::class, 
+            'json',
+            [
+                'circular_reference_handler' => function ($object) {
+                    return $object->getId();
+                },
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['garage', 'contacts', 'users', 'cars', 'comments'],
+            ]
+        );
+
+        $contact->setGarage($garage);
+
         $em->persist($contact);
         $em->flush();
 
-        return $this->json([
-            'message' => 'contact created!'
-        ]);
+        $contactSerialized = $serializer->serialize(
+            $contact,
+            'json', 
+            [
+                'circular_reference_handler' => function ($object) {
+                    return $object->getId();
+                },
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['services', 'contacts', 'users', 'cars', 'comments'],
+            ]
+        );
+
+        return new JsonResponse(
+            $contactSerialized, 
+            Response::HTTP_OK, 
+            ['Content-Type' => 'application/json;charset=UTF-8'], 
+            true
+        );
+
 
     }
     
@@ -61,6 +95,37 @@ class ContactController extends AbstractController
     
     }
     
+    #[Route('/api/contact/garage/{id}', name: 'app_get_contact_garage', methods: ['GET'])]
+    public function findByGarage(
+        Garage $garage,
+        Request $request, 
+        ContactRepository $commentRepository, 
+        SerializerInterface $serializer
+    ): JsonResponse
+    {
+
+        $filtre = ['garage' => $garage];
+
+        $contacts = $serializer->serialize(
+            $commentRepository->findBy($filtre),
+            'json', 
+            [
+                'circular_reference_handler' => function ($object) {
+                    return $object->getId();
+                },
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['garages', 'users', 'users', 'cars', 'comments', 'services'],
+            ]
+        );
+
+        return new JsonResponse(
+            $contacts, 
+            Response::HTTP_OK, 
+            ['Content-Type' => 'application/json;charset=UTF-8'], 
+            true
+        );
+
+    }
+
     #[Route('/api/contact/{id}', name: 'app_get_contact_id', methods: ['GET'])]
     public function find(
         Request $request, 

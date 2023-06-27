@@ -20,7 +20,7 @@ class Contact
     #[ORM\Column(type: Types::TEXT)]
     private ?string $message = null;
 
-    #[ORM\ManyToOne(inversedBy: 'contacts')]
+    #[ORM\ManyToOne(inversedBy: 'contacts', cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?Garage $garage = null;
 
