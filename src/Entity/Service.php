@@ -3,8 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\ServiceRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -17,9 +16,33 @@ class Service
     public ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(
+        message: 'Le nom du service est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 2,
+        minMessage: 'Le nom du service doit faire au minimum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^[a-zA-Z -\']*$/",
+        match: false,
+        message: 'Caractères autorisés : lettres, tiret et quotes'
+    )]
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(
+        message: 'La description est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 2,
+        minMessage: 'La description doit faire au minimum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^[0-9a-zA-Z -\']*$/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
     private ?string $description = null;
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]

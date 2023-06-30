@@ -12,27 +12,19 @@ use Doctrine\ORM\EntityManagerInterface ;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\HttpFoundation\Response;
 use App\Repository\OptionRepository;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 class OptionController extends AbstractController
 {
 
     #[Route('/api/option', name: 'app_post_option', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
     public function create(
         Request $request, 
         SerializerInterface $serializer, 
         EntityManagerInterface $em
     ): JsonResponse
     {
-
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == null) {
-            return new JsonResponse(
-                ['message' => 'user non habilit !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-            );
-        }
 
         $option = $serializer->deserialize($request->getContent(), Option::class, 'json');
         $em->persist($option);
@@ -85,23 +77,13 @@ class OptionController extends AbstractController
     }
     
     #[Route('/api/option/{id}', name: 'app_get_option_id', methods: ['GET'])]
+    #[IsGranted('ROLE_USER')]
     public function find(
         Request $request, 
         Option $option, 
         SerializerInterface $serializer
     ): JsonResponse
     {
-
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == null) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-                true
-            );
-        }
 
         $options = $serializer->serialize(
             $option,
@@ -124,6 +106,7 @@ class OptionController extends AbstractController
     }
     
     #[Route('/api/option/{id}', name: 'ap_put_option_id', methods: ['PUT'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function update(
         Request $request, 
         Option $currentOption, 
@@ -131,17 +114,6 @@ class OptionController extends AbstractController
         EntityManagerInterface $em
     ): JsonResponse
     {
-
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-                true
-            );
-        }
 
         $updatedOption = $serializer->deserialize($request->getContent(), 
                 Option::class, 
@@ -172,23 +144,13 @@ class OptionController extends AbstractController
     }
 
     #[Route('/api/option/{id}', name: 'app_delete_option_id', methods: ['DELETE'])]
+    #[IsGranted('ROLE_USER')]
     public function delete(
         Request $request, 
         Option $option, 
         EntityManagerInterface $em
     ): JsonResponse
     {
-
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == null) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-                true
-            );
-        }
 
         $em->remove($option);
         $em->flush();
@@ -200,16 +162,6 @@ class OptionController extends AbstractController
             ['Content-Type' => 'application/json;charset=UTF-8'], 
         );
 
-    }
-
-    public function jwtDecodePayload (string $jwt) 
-    {
-        $tokenPayload = base64_decode(explode('.', str_replace(
-            "Bearer ",
-            "",
-            $jwt
-        ))[1]);
-        return json_decode($tokenPayload);        
     }
 
 }

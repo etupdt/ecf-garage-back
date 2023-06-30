@@ -14,6 +14,8 @@ use Symfony\Component\HttpFoundation\Response;
 use App\Repository\ContactRepository;
 use App\Entity\Garage;
 use App\Repository\GarageRepository;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ContactController extends AbstractController
 {
@@ -23,7 +25,8 @@ class ContactController extends AbstractController
         Request $request, 
         SerializerInterface $serializer, 
         GarageRepository $garageRepository, 
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        ValidatorInterface $validator
     ): JsonResponse
     {
 
@@ -43,6 +46,23 @@ class ContactController extends AbstractController
         );
 
         $contact->setGarage($garage);
+
+        $violations = $validator->validate($contact);
+
+        if (count($violations) > 0) {
+
+            $messages =[];
+            foreach($violations as $violation) {
+                array_push($messages, $violation->getMessage());
+            }
+
+            return new JsonResponse(
+                ['errors' => $messages], 
+                JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 
+                ['Content-Type' => 'application/json;charset=UTF-8']
+            );
+            
+        }
 
         $em->persist($contact);
         $em->flush();
@@ -127,23 +147,13 @@ class ContactController extends AbstractController
     }
 
     #[Route('/api/contact/{id}', name: 'app_get_contact_id', methods: ['GET'])]
+    #[IsGranted('ROLE_USER')]
     public function find(
         Request $request, 
         Contact $contact, 
         SerializerInterface $serializer
     ): JsonResponse
     {
-
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == null || !in_array("ROLE_USER", $bearer->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-                true
-            );
-        }
 
         $contacts = $serializer->serialize(
             $contact,
@@ -166,30 +176,38 @@ class ContactController extends AbstractController
     }
     
     #[Route('/api/contact/{id}', name: 'ap_put_contact_id', methods: ['PUT'])]
+    #[IsGranted('ROLE_USER')]
     public function update(
         Request $request, 
         Contact $currentContact, 
         SerializerInterface $serializer, 
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        ValidatorInterface $validator
     ): JsonResponse
     {
-
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == null || !in_array("ROLE_USER", $bearer->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-                true
-            );
-        }
 
         $updatedContact = $serializer->deserialize($request->getContent(), 
                 Contact::class, 
                 'json', 
                 [AbstractNormalizer::OBJECT_TO_POPULATE => $currentContact]);
         
+        $violations = $validator->validate($updatedContact);
+
+        if (count($violations) > 0) {
+            
+            $messages =[];
+            foreach($violations as $violation) {
+                array_push($messages, $violation->getMessage());
+            }
+
+            return new JsonResponse(
+                ['errors' => $messages], 
+                JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 
+                ['Content-Type' => 'application/json;charset=UTF-8']
+            );
+            
+        }
+
         $em->persist($updatedContact);
         $em->flush();
 
@@ -203,23 +221,13 @@ class ContactController extends AbstractController
     }
     
     #[Route('/api/contact/{id}', name: 'app_delete_contact_id', methods: ['DELETE'])]
+    #[IsGranted('ROLE_USER')]
     public function delete(
         Request $request, 
         Contact $contact, 
         EntityManagerInterface $em
     ): JsonResponse
     {
-
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == null || !in_array("ROLE_USER", $bearer->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-                true
-            );
-        }
 
         $em->remove($contact);
         $em->flush();
@@ -231,16 +239,6 @@ class ContactController extends AbstractController
             ['Content-Type' => 'application/json;charset=UTF-8'], 
         );
     
-    }
-
-    public function jwtDecodePayload (string $jwt) 
-    {
-        $tokenPayload = base64_decode(explode('.', str_replace(
-            "Bearer ",
-            "",
-            $jwt
-        ))[1]);
-        return json_decode($tokenPayload);        
     }
 
 }

@@ -14,13 +14,14 @@ use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\HttpFoundation\Response;
 use App\Repository\UserRepository;
 use App\Repository\GarageRepository;
-use phpDocumentor\Reflection\Types\Integer;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 class UserController extends AbstractController
 {
 
     #[Route('/api/user', name: 'app_post_user', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function create(
         Request $request, 
         SerializerInterface $serializer, 
@@ -36,17 +37,6 @@ class UserController extends AbstractController
             'json',
             [AbstractNormalizer::IGNORED_ATTRIBUTES => ['garages']]
         );
-
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-                true
-            );
-        }
 
         $user->setGarage($garageRepository->findOneBy(['raison' => $user->getGarage()->getRaison()]));
 
@@ -67,23 +57,13 @@ class UserController extends AbstractController
     }
     
     #[Route('/api/user', name: 'app_get_user', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function findAll(
         Request $request, 
         UserRepository $userRepository, 
         SerializerInterface $serializer
     ): JsonResponse
     {
-
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-                true
-            );
-        }
 
         $users = $serializer->serialize(
             $userRepository->findAll(),
@@ -106,6 +86,7 @@ class UserController extends AbstractController
     }
     
     #[Route('/api/user/garage/{id}', name: 'app_get_user_garage', methods: ['GET'])]
+    #[IsGranted('ROLE_USER')]
     public function findByGarage(
         Garage $garage,
         Request $request, 
@@ -148,23 +129,13 @@ class UserController extends AbstractController
     }
     
     #[Route('/api/user/{id}', name: 'app_get_user_id', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function find(
         Request $request, 
         User $user, 
         SerializerInterface $serializer
     ): JsonResponse
     {
-
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles) && $user->getEmail() != $bearer->username) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-                true
-            );
-        }
 
         $users = $serializer->serialize(
             $user,
@@ -243,23 +214,13 @@ class UserController extends AbstractController
     }
     
     #[Route('/api/user/{id}', name: 'app_delete_user_id', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function delete(
         Request $request,
         User $user, 
         EntityManagerInterface $em
     ): JsonResponse
     {
-
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-                true
-            );
-        }
 
         $em->remove($user);
         $em->flush();

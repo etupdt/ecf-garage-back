@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\FeatureRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: FeatureRepository::class)]
 class Feature
@@ -15,9 +16,33 @@ class Feature
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(
+        message: 'Le nom de la caractàristique est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 2,
+        minMessage: 'Le nom de la caractàristique doit faire au minimum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^[a-zA-Z -\']*$/",
+        match: false,
+        message: 'Caractères autorisés : lettres, tiret et quotes'
+    )]
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(
+        message: 'La description est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 2,
+        minMessage: 'La description doit faire au minimum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^[0-9a-zA-Z -\']*$/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
     private ?string $description = null;
 
     #[ORM\ManyToOne(inversedBy: 'features')]

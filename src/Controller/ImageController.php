@@ -12,11 +12,13 @@ use Doctrine\ORM\EntityManagerInterface ;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\HttpFoundation\Response;
 use App\Repository\ImageRepository;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 
 class ImageController extends AbstractController
 {
 
     #[Route('/api/image', name: 'app_post_image', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function create(
         Request $request, 
         SerializerInterface $serializer, 
@@ -24,17 +26,6 @@ class ImageController extends AbstractController
         EntityManagerInterface $em
     ): JsonResponse
     {
-
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-                true
-            );
-        }
 
         $imageFile = $request->files->get('garage_image');
 
@@ -85,23 +76,13 @@ class ImageController extends AbstractController
     }
     
     #[Route('/api/image/{id}', name: 'app_get_image_id', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function find(
         Request $request, 
         Image $image, 
         SerializerInterface $serializer
     ): JsonResponse
     {
-
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-                true
-            );
-        }
 
         $imageSerialized = $serializer->serialize(
             $image,
@@ -124,6 +105,7 @@ class ImageController extends AbstractController
     }
     
     #[Route('/api/image/{id}', name: 'ap_put_image_id', methods: ['PUT'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function update(
         Request $request, 
         Image $currentImage, 
@@ -131,17 +113,6 @@ class ImageController extends AbstractController
         EntityManagerInterface $em
     ): JsonResponse
     {
-
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-                true
-            );
-        }
 
         $updatedImage = $serializer->deserialize($request->getContent(), 
                 Image::class, 
@@ -161,23 +132,13 @@ class ImageController extends AbstractController
     }
     
     #[Route('/api/image/{id}', name: 'app_delete_image_id', methods: ['DELETE'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function delete(
         Request $request, 
         Image $image, 
         EntityManagerInterface $em
     ): JsonResponse
     {
-
-        $bearer = $this->jwtDecodePayload($request->headers->get('Authorization'));
-
-        if ($bearer == null || !in_array("ROLE_ADMIN", $bearer->roles)) {
-            return new JsonResponse(
-                ['message' => 'user non habilité !'],
-                Response::HTTP_UNAUTHORIZED, 
-                ['Content-Type' => 'application/json;charset=UTF-8'], 
-                true
-            );
-        }
 
         $em->remove($image);
         $em->flush();
@@ -189,16 +150,6 @@ class ImageController extends AbstractController
             ['Content-Type' => 'application/json;charset=UTF-8'], 
         );
     
-    }
-
-    public function jwtDecodePayload (string $jwt) 
-    {
-        $tokenPayload = base64_decode(explode('.', str_replace(
-            "Bearer ",
-            "",
-            $jwt
-        ))[1]);
-        return json_decode($tokenPayload);        
     }
 
 }

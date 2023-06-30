@@ -7,6 +7,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Constraints\Date;
 
 #[ORM\Entity(repositoryClass: CarRepository::class)]
 class Car
@@ -17,12 +19,26 @@ class Car
     private ?int $id = null;
 
     #[ORM\Column]
+    #[Assert\Positive(
+        message: 'Le prix doit être supérieur à zéro'
+    )]
     private ?float $price = null;
 
     #[ORM\Column]
+    #[Assert\GreaterThan(
+        value: 1950,
+        message: 'L\'année doit être supérieure à 1950'
+    )]
+    #[Assert\Expression(
+        "value <= date('Y')",
+        message: 'L\'année doit être inférieure ou égale à l\'année en cours'
+    )]
     private ?int $year = null;
 
     #[ORM\Column]
+    #[Assert\Positive(
+        message: 'Le prix doit être supérieur à zéro'
+    )]
     private ?int $kilometer = null;
 
     #[ORM\ManyToMany(targetEntity: Option::class, inversedBy: 'features', cascade: ['persist'])]
@@ -36,15 +52,42 @@ class Car
     private ?Garage $garage = null;
 
     #[ORM\OneToOne(cascade: ['persist'])]
+    #[Assert\NotBlank(
+        message: 'L\'image principale est obligatoire'
+    )]
     private ?Image $image = null;
 
     #[ORM\OneToMany(mappedBy: 'car', targetEntity: Image::class, orphanRemoval: true, cascade: ['persist', 'remove'])]
     private Collection $images;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(
+        message: 'La marque doit être renseignée'
+    )]
+    #[Assert\Length(
+        min: 2,
+        minMessage: 'La marque doit faire au minimum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^[0-9a-zA-Z -\']*$/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
     private ?string $brand = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(
+        message: 'Le modèle doit être renseigné'
+    )]
+    #[Assert\Length(
+        min: 2,
+        minMessage: 'Le modèle doit faire au minimum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^[0-9a-zA-Z -\']*$/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
     private ?string $model = null;
 
     #[ORM\Column(type: Types::TEXT)]

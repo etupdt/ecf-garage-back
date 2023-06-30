@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\ContactRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ContactRepository::class)]
 class Contact
@@ -15,9 +16,33 @@ class Contact
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(
+        message: 'Le message est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 5,
+        minMessage: 'Le sujet doit faire au minimum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^[0-9a-zA-Z -\']*$/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
     private ?string $subject = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(
+        message: 'Le message est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 2,
+        minMessage: 'Le message doit faire au minimum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^[0-9a-zA-Z -\']*$/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
     private ?string $message = null;
 
     #[ORM\ManyToOne(inversedBy: 'contacts', cascade: ['persist'])]
@@ -25,15 +50,58 @@ class Contact
     private ?Garage $garage = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(
+        message: 'Le prénom est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 2,
+        max: 32,
+        minMessage: 'Le prénom doit faire au minimum {{ limit }} caractères de long',
+        maxMessage: 'Le prénom doit faire au maximum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^[a-zA-Z -\']*$/",
+        match: false,
+        message: 'Caractères autorisés : lettres, tiret et quotes'
+    )]
     private ?string $firstname = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(
+        message: 'Le nom est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 2,
+        max: 32,
+        minMessage: 'Le nom doit faire au minimum {{ limit }} caractères de long',
+        maxMessage: 'Le nom doit faire au maximum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^[a-zA-Z -\']*$/",
+        match: false,
+        message: 'Caractères autorisés : lettres, tirets et quotes'
+    )]
     private ?string $lastname = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\Email(
+        message: 'L\'adresse mail n\'est pas valide.',
+    )]
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(
+        message: 'Le téléphone est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 14,
+        minMessage: 'Le téléphone doit comprendre au minimum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^(0)[1-9]( \d{2}){4}$/",
+        match: false,
+        message: 'Le téléphone n\'a pas le bon format. Caractères autorisés : chiffres et espaces'
+    )]
     private ?string $phone = null;
 
     public function getId(): ?int

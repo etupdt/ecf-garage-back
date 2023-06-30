@@ -6,7 +6,7 @@ use App\Repository\GarageRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use ApiPlatform\Core\Annotation\ApiResource;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: GarageRepository::class)]
 class Garage
@@ -17,42 +17,144 @@ class Garage
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(
+        message: 'La raison sociale est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 2,
+        minMessage: 'La raison sociale doit faire au minimum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^[0-9a-zA-Z -+*_='/]*$/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
     private ?string $raison = null;
 
     #[ORM\Column(length: 16)]
+    #[Assert\NotBlank(
+        message: 'Le téléphone est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 14,
+        minMessage: 'Le téléphone doit comprendre au minimum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^(0)[1-9]( \d{2}){4}$/",
+        match: false,
+        message: 'Le téléphone n\'a pas le bon format. Caractères autorisés : chiffres et espaces'
+    )]
     private ?string $phone = null;
 
     #[ORM\Column(length: 255)]
     private ?string $address1 = null;
+    #[Assert\NotBlank(
+        message: 'L\'adresse 1 est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 2,
+        minMessage: 'L\'adresse 1 doit faire au minimum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/[0-9a-zA-Z -+*_='/]{0,}/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
 
     #[ORM\Column(length: 255)]
+    #[Assert\Regex(
+        pattern: "/[0-9a-zA-Z -+*_='/]{0,}/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
     private ?string $address2 = null;
 
     #[ORM\Column(length: 10)]
+    #[Assert\NotBlank(
+        message: 'Le prénom est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 5,
+        max: 5,
+        minMessage: 'Le code postal doit faire au minimum {{ limit }} caractères de long',
+        maxMessage: 'Le code postal doit faire au maximum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^[0-9]*$/",
+        match: false,
+        message: 'Caractères autorisés : chiffres'
+    )]
     private ?string $zip = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(
+        message: 'La localité est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 2,
+        minMessage: 'La localité doit faire au minimum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/[0-9a-zA-Z -+*_='/]{0,}/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
     private ?string $locality = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\Regex(
+        pattern: "/[0-9a-zA-Z -+*_='/]{0,}/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
     private ?string $day1hours = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\Regex(
+        pattern: "/[0-9a-zA-Z -+*_='/]{0,}/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
     private ?string $day2hours = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\Regex(
+        pattern: "/[0-9a-zA-Z -+*_='/]{0,}/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
     private ?string $day3hours = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\Regex(
+        pattern: "/[0-9a-zA-Z -+*_='/]{0,}/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
     private ?string $day4hours = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\Regex(
+        pattern: "/[0-9a-zA-Z -+*_='/]{0,}/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
     private ?string $day5hours = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\Regex(
+        pattern: "/[0-9a-zA-Z -+*_='/]{0,}/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
     private ?string $day6hours = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\Regex(
+        pattern: "/[0-9a-zA-Z -+*_='/]{0,}/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
     private ?string $day7hours = null;
 
     #[ORM\OneToMany(mappedBy: 'garage', targetEntity: Contact::class, orphanRemoval: true)]
