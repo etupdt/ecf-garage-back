@@ -42,18 +42,30 @@ class UserController extends AbstractController
 
         $user->setPassword($passwordHasher->hashPassword(
             $user,
-            $user->getPassword()
+            'achanger'
         ));
 
         $em->persist($user);
         $em->flush();
 
+        $commentSerialized = $serializer->serialize(
+            $user,
+            'json', 
+            [
+                'circular_reference_handler' => function ($object) {
+                    return $object->getId();
+                },
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['garage'],
+            ]
+        );
+
         return new JsonResponse(
-            ['message' => 'user created!'],
+            $commentSerialized, 
             Response::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
+            true
         );
-    
+
     }
     
     #[Route('/api/user', name: 'app_get_user', methods: ['GET'])]
@@ -170,13 +182,16 @@ class UserController extends AbstractController
 
         $email = $currentUser->getEmail();
 
+        $content = json_decode($request->getContent());
+        $password = $content->password;
+
         $updatedUser = $serializer->deserialize(
             $request->getContent(), 
             User::class, 
             'json', 
             [
                 AbstractNormalizer::OBJECT_TO_POPULATE => $currentUser,
-                AbstractNormalizer::IGNORED_ATTRIBUTES => ['garages']
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['garages', 'roles']
             ]
         );
         
@@ -197,18 +212,40 @@ class UserController extends AbstractController
 
         $updatedUser->setGarage($garageRepository->findOneBy(['raison' => $updatedUser->getGarage()->getRaison()]));
 
-        $updatedUser->setPassword($passwordHasher->hashPassword(
-            $updatedUser,
-            $updatedUser->getPassword()
-        ));
+        if ($password != '') {
+            if (strlen($password) >= 10 && preg_match('/^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[\*\-\+\?\!])[0-9a-zA-Z\*\-\+\?\!]+$/', $password)) {
+                $updatedUser->setPassword($passwordHasher->hashPassword(
+                    $updatedUser,
+                    $updatedUser->getPassword()
+                ));
+            } else {
+                return $this->json(
+                    ['message' => 'Mot de passe non valide !'], 
+                    JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 
+                    ['Content-Type' => 'application/json;charset=UTF-8'], 
+                );        
+            }
+        }    
 
         $em->persist($updatedUser);
         $em->flush();
 
-        return $this->json(
-            ['message' => 'user modified!'], 
-            JsonResponse::HTTP_OK, 
+        $returnOption = $serializer->serialize(
+            $updatedUser,
+            'json', 
+            [
+                'circular_reference_handler' => function ($object) {
+                    return $object->getId();
+                },
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['garage'],
+            ]
+        );
+
+        return new JsonResponse(
+            $returnOption, 
+            Response::HTTP_OK, 
             ['Content-Type' => 'application/json;charset=UTF-8'], 
+            true
         );
 
     }
