@@ -3,8 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\ServiceRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -14,20 +13,43 @@ class Service
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    public ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(
+        message: 'Le nom du service est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 2,
+        minMessage: 'Le nom du service doit faire au minimum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^[a-zA-Z -\']*$/",
+        match: false,
+        message: 'Caractères autorisés : lettres, tiret et quotes'
+    )]
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(
+        message: 'La description est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 2,
+        minMessage: 'La description doit faire au minimum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^[0-9a-zA-Z -\']*$/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
     private ?string $description = null;
 
-    #[ORM\ManyToMany(targetEntity: Garage::class, mappedBy: 'services')]
-    private Collection $garages;
+    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    private ?Image $image = null;
 
     public function __construct()
     {
-        $this->garages = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -59,30 +81,30 @@ class Service
         return $this;
     }
 
-    /**
-     * @return Collection<int, Garage>
-     */
-    public function getGarages(): Collection
+    public function getImage(): ?Image
     {
-        return $this->garages;
+        return $this->image;
     }
 
-    public function addGarage(Garage $garage): self
+    public function setImage(?Image $image): self
     {
-        if (!$this->garages->contains($garage)) {
-            $this->garages->add($garage);
-            $garage->addService($this);
-        }
+        $this->image = $image;
 
         return $this;
     }
 
-    public function removeGarage(Garage $garage): self
+    public function __toString() 
     {
-        if ($this->garages->removeElement($garage)) {
-            $garage->removeService($this);
-        }
 
-        return $this;
+        $retour = "========================================> Service :\n";
+
+        $retour = $retour."Id          : ".$this->getId()."\n";
+        $retour = $retour."Name        : ".$this->getName()."\n";
+        $retour = $retour."Description : ".$this->getDescription()."\n";
+        $retour = $retour."Image       : ".$this->getImage()."\n";
+
+        return $retour;
+
     }
+
 }

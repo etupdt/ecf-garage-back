@@ -3,8 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\OptionRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -15,20 +14,40 @@ class Option
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    public ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(
+        message: 'Le nom de l\'option est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 2,
+        minMessage: 'Le nom de l\'option doit faire au minimum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^[a-zA-Z -\']*$/",
+        match: false,
+        message: 'Caractères autorisés : lettres, tiret et quotes'
+    )]
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(
+        message: 'La description est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 2,
+        minMessage: 'La description doit faire au minimum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/[0-9a-zA-Z -+*_='/]*$/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
     private ?string $description = null;
-
-    #[ORM\ManyToMany(targetEntity: Car::class, mappedBy: 'options')]
-    private Collection $features;
 
     public function __construct()
     {
-        $this->features = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -60,30 +79,4 @@ class Option
         return $this;
     }
 
-    /**
-     * @return Collection<int, Car>
-     */
-    public function getFeatures(): Collection
-    {
-        return $this->features;
-    }
-
-    public function addFeature(Car $feature): self
-    {
-        if (!$this->features->contains($feature)) {
-            $this->features->add($feature);
-            $feature->addOption($this);
-        }
-
-        return $this;
-    }
-
-    public function removeFeature(Car $feature): self
-    {
-        if ($this->features->removeElement($feature)) {
-            $feature->removeOption($this);
-        }
-
-        return $this;
-    }
 }

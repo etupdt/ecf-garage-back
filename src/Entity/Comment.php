@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\CommentRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CommentRepository::class)]
 class Comment
@@ -15,21 +16,68 @@ class Comment
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(
+        message: 'Le prénom est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 2,
+        max: 32,
+        minMessage: 'Le prénom doit faire au minimum {{ limit }} caractères de long',
+        maxMessage: 'Le prénom doit faire au maximum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^[a-zA-Z -\']*$/",
+        match: false,
+        message: 'Caractères autorisés : lettres, tiret et quotes'
+    )]
     private ?string $firstname = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(
+        message: 'Le nom est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 2,
+        max: 32,
+        minMessage: 'Le nom doit faire au minimum {{ limit }} caractères de long',
+        maxMessage: 'Le nom doit faire au maximum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^[a-zA-Z -\']*$/",
+        match: false,
+        message: 'Caractères autorisés : lettres, tirets et quotes'
+    )]
     private ?string $lastname = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(
+        message: 'Le commentaire est obligatoire'
+    )]
+    #[Assert\Length(
+        min: 2,
+        minMessage: 'Le commentaire doit faire au minimum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^[0-9a-zA-Z -\']*$/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
     private ?string $comment = null;
 
     #[ORM\Column]
+    #[Assert\Positive(
+        message: 'La note doit être supérieure à zéro'
+    )]
+    #[Assert\LessThan(
+        value: 6,
+        message: 'La note doit être inférieur à 6'
+    )]
     private ?int $note = null;
 
     #[ORM\Column]
     private ?bool $isApproved = null;
 
-    #[ORM\ManyToOne(inversedBy: 'comments')]
+    #[ORM\ManyToOne(inversedBy: 'comments', cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?Garage $garage = null;
 

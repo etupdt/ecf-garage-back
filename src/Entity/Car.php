@@ -5,7 +5,10 @@ namespace App\Entity;
 use App\Repository\CarRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Constraints\Date;
 
 #[ORM\Entity(repositoryClass: CarRepository::class)]
 class Car
@@ -16,30 +19,79 @@ class Car
     private ?int $id = null;
 
     #[ORM\Column]
+    #[Assert\Positive(
+        message: 'Le prix doit être supérieur à zéro'
+    )]
     private ?float $price = null;
 
     #[ORM\Column]
+    #[Assert\GreaterThan(
+        value: 1950,
+        message: 'L\'année doit être supérieure à 1950'
+    )]
+    #[Assert\Expression(
+        "value <= date('Y')",
+        message: 'L\'année doit être inférieure ou égale à l\'année en cours'
+    )]
     private ?int $year = null;
 
     #[ORM\Column]
+    #[Assert\Positive(
+        message: 'Le prix doit être supérieur à zéro'
+    )]
     private ?int $kilometer = null;
 
-    #[ORM\ManyToMany(targetEntity: Option::class, inversedBy: 'features')]
+    #[ORM\ManyToMany(targetEntity: Option::class, inversedBy: 'features', cascade: ['persist'])]
     private Collection $options;
 
-    #[ORM\OneToMany(mappedBy: 'car', targetEntity: Feature::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'car', targetEntity: Feature::class, orphanRemoval: true, cascade: ['persist'])]
     private Collection $features;
 
-    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Image $image = null;
-
-    #[ORM\OneToMany(mappedBy: 'car', targetEntity: Image::class, orphanRemoval: true)]
-    private Collection $images;
-
-    #[ORM\ManyToOne(inversedBy: 'cars')]
+    #[ORM\ManyToOne(inversedBy: 'cars', cascade: ['persist'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?Garage $garage = null;
+
+    #[ORM\OneToOne(cascade: ['persist'])]
+    #[Assert\NotBlank(
+        message: 'L\'image principale est obligatoire'
+    )]
+    private ?Image $image = null;
+
+    #[ORM\OneToMany(mappedBy: 'car', targetEntity: Image::class, orphanRemoval: true, cascade: ['persist', 'remove'])]
+    private Collection $images;
+
+    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(
+        message: 'La marque doit être renseignée'
+    )]
+    #[Assert\Length(
+        min: 2,
+        minMessage: 'La marque doit faire au minimum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^[0-9a-zA-Z -\']*$/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
+    private ?string $brand = null;
+
+    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(
+        message: 'Le modèle doit être renseigné'
+    )]
+    #[Assert\Length(
+        min: 2,
+        minMessage: 'Le modèle doit faire au minimum {{ limit }} caractères de long',
+    )]
+    #[Assert\Regex(
+        pattern: "/^[0-9a-zA-Z -\']*$/",
+        match: false,
+        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+    )]
+    private ?string $model = null;
+
+    #[ORM\Column(type: Types::TEXT)]
+    private ?string $description = null;
 
     public function __construct()
     {
@@ -92,9 +144,9 @@ class Car
     /**
      * @return Collection<int, Option>
      */
-    public function getOptions(): Collection
+    public function getOptions()
     {
-        return $this->options;
+        return $this->options->getValues();
     }
 
     public function addOption(Option $option): self
@@ -116,9 +168,9 @@ class Car
     /**
      * @return Collection<int, Feature>
      */
-    public function getFeatures(): Collection
+    public function getFeatures()
     {
-        return $this->features;
+        return $this->features->getValues();
     }
 
     public function addFeature(Feature $feature): self
@@ -143,12 +195,24 @@ class Car
         return $this;
     }
 
+    public function getGarage(): ?Garage
+    {
+        return $this->garage;
+    }
+
+    public function setGarage(?Garage $garage): self
+    {
+        $this->garage = $garage;
+
+        return $this;
+    }
+
     public function getImage(): ?Image
     {
         return $this->image;
     }
 
-    public function setImage(Image $image): self
+    public function setImage(?Image $image): self
     {
         $this->image = $image;
 
@@ -158,9 +222,9 @@ class Car
     /**
      * @return Collection<int, Image>
      */
-    public function getImages(): Collection
+    public function getImages()
     {
-        return $this->images;
+        return $this->images->getValues();
     }
 
     public function addImage(Image $image): self
@@ -185,14 +249,38 @@ class Car
         return $this;
     }
 
-    public function getGarage(): ?Garage
+    public function getBrand(): ?string
     {
-        return $this->garage;
+        return $this->brand;
     }
 
-    public function setGarage(?Garage $garage): self
+    public function setBrand(string $brand): self
     {
-        $this->garage = $garage;
+        $this->brand = $brand;
+
+        return $this;
+    }
+
+    public function getModel(): ?string
+    {
+        return $this->model;
+    }
+
+    public function setModel(string $model): self
+    {
+        $this->model = $model;
+
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(string $description): self
+    {
+        $this->description = $description;
 
         return $this;
     }

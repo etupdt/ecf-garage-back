@@ -17,8 +17,10 @@ class Image
     private ?string $filename = null;
 
     #[ORM\ManyToOne(inversedBy: 'images')]
-    #[ORM\JoinColumn(nullable: false)]
     private ?Car $car = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $hash = null;
 
     public function getId(): ?int
     {
@@ -45,6 +47,18 @@ class Image
     public function setCar(?Car $car): self
     {
         $this->car = $car;
+
+        return $this;
+    }
+
+    public function getHash(): ?string
+    {
+        return $this->hash;
+    }
+
+    public function setHash(string $hash): self
+    {
+        $this->hash = $hash;
 
         return $this;
     }
