@@ -1,0 +1,14 @@
+version: 0.0
+os: linux
+files:
+#  - source: /
+#    destination: /var/www/html/symfony_yourbook
+#    overwrite: true
+#file_exists_behavior: OVERWRITE
+hooks:
+  BeforeInstall:
+    - location: scripts/startapache.sh
+      runas: root
+  AfterInstall:
+    - location: scripts/restartapache.sh
+      runas: root
