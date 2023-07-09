@@ -11,5 +11,5 @@ sudo docker rm ecf-garage-back |& tee -a $log
 
 sudo docker image rm 498746666064.dkr.ecr.eu-west-3.amazonaws.com/ecf-garage-back:latest
 
-docker pull 498746666064.dkr.ecr.eu-west-3.amazonaws.com/ecf-garage-back:latest |& tee -a $log
+sudo docker pull 498746666064.dkr.ecr.eu-west-3.amazonaws.com/ecf-garage-back:latest |& tee -a $log
 sudo docker run -p 9443:9443 -d -v symfony-images:/var/www/html/ecf-garage-back/public/images --name ecf-garage-back 498746666064.dkr.ecr.eu-west-3.amazonaws.com/ecf-garage-back |& tee -a $log
