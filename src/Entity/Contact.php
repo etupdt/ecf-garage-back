@@ -17,16 +17,16 @@ class Contact
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(
-        message: 'Le message est obligatoire'
+        message: 'Le sujet est obligatoire'
     )]
     #[Assert\Length(
         min: 5,
         minMessage: 'Le sujet doit faire au minimum {{ limit }} caractères de long',
     )]
     #[Assert\Regex(
-        pattern: "/^[0-9a-zA-Z -\']*$/",
-        match: false,
-        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+        pattern: "/^[a-zA-Z0-9 -éèàêç]*$/",
+        match: true,
+        message: 'Le sujet : Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
     )]
     private ?string $subject = null;
 
@@ -39,9 +39,9 @@ class Contact
         minMessage: 'Le message doit faire au minimum {{ limit }} caractères de long',
     )]
     #[Assert\Regex(
-        pattern: "/^[0-9a-zA-Z -\']*$/",
-        match: false,
-        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+        pattern: "/[0-9a-zA-Z -+*_='\/]*$/",
+        match: true,
+        message: 'Le message : Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
     )]
     private ?string $message = null;
 
@@ -60,9 +60,9 @@ class Contact
         maxMessage: 'Le prénom doit faire au maximum {{ limit }} caractères de long',
     )]
     #[Assert\Regex(
-        pattern: "/^[a-zA-Z -\']*$/",
-        match: false,
-        message: 'Caractères autorisés : lettres, tiret et quotes'
+        pattern: "/^[a-zA-Z -éèàêç]*$/",
+        match: true,
+        message: 'Le prénom : Caractères autorisés : lettres, tiret et quotes'
     )]
     private ?string $firstname = null;
 
@@ -77,9 +77,9 @@ class Contact
         maxMessage: 'Le nom doit faire au maximum {{ limit }} caractères de long',
     )]
     #[Assert\Regex(
-        pattern: "/^[a-zA-Z -\']*$/",
-        match: false,
-        message: 'Caractères autorisés : lettres, tirets et quotes'
+        pattern: "/^[a-zA-Z -éèàêç]*$/",
+        match: true,
+        message: 'Le nom : Caractères autorisés : lettres, tirets et quotes'
     )]
     private ?string $lastname = null;
 
@@ -99,7 +99,7 @@ class Contact
     )]
     #[Assert\Regex(
         pattern: "/^(0)[1-9]( \d{2}){4}$/",
-        match: false,
+        match: true,
         message: 'Le téléphone n\'a pas le bon format. Caractères autorisés : chiffres et espaces'
     )]
     private ?string $phone = null;

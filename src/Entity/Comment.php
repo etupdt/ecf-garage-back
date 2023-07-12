@@ -26,9 +26,9 @@ class Comment
         maxMessage: 'Le prénom doit faire au maximum {{ limit }} caractères de long',
     )]
     #[Assert\Regex(
-        pattern: "/^[a-zA-Z -\']*$/",
-        match: false,
-        message: 'Caractères autorisés : lettres, tiret et quotes'
+        pattern: "/^[a-zA-Z -éèàêç]*$/",
+        match: true,
+        message: 'prénom : Caractères autorisés : lettres, tiret et quotes'
     )]
     private ?string $firstname = null;
 
@@ -37,15 +37,15 @@ class Comment
         message: 'Le nom est obligatoire'
     )]
     #[Assert\Length(
-        min: 2,
+        min: 2, 
         max: 32,
         minMessage: 'Le nom doit faire au minimum {{ limit }} caractères de long',
         maxMessage: 'Le nom doit faire au maximum {{ limit }} caractères de long',
     )]
     #[Assert\Regex(
-        pattern: "/^[a-zA-Z -\']*$/",
-        match: false,
-        message: 'Caractères autorisés : lettres, tirets et quotes'
+        pattern: "/^[a-zA-Z -éèàêç]*$/",
+        match: true,
+        message: 'nom : Caractères autorisés : lettres, tirets et quotes'
     )]
     private ?string $lastname = null;
 
@@ -58,9 +58,9 @@ class Comment
         minMessage: 'Le commentaire doit faire au minimum {{ limit }} caractères de long',
     )]
     #[Assert\Regex(
-        pattern: "/^[0-9a-zA-Z -\']*$/",
-        match: false,
-        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+        pattern: "/[0-9a-zA-Z -+*_='\/]*$/",
+        match: true,
+        message: 'commentaire : Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
     )]
     private ?string $comment = null;
 

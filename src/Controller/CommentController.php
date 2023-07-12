@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller; 
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -15,6 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
 use App\Repository\CommentRepository;
 use App\Repository\GarageRepository;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class CommentController extends AbstractController
 {
@@ -25,6 +26,7 @@ class CommentController extends AbstractController
         SerializerInterface $serializer, 
         EntityManagerInterface $em,
         GarageRepository $garageRepository, 
+        ValidatorInterface $validator
     ): JsonResponse
     {
         
@@ -44,6 +46,23 @@ class CommentController extends AbstractController
         );
 
         $comment->setGarage($garage);
+
+        $violations = $validator->validate($comment);
+
+        if (count($violations) > 0) {
+
+            $messages = [];
+            foreach($violations as $violation) {
+                array_push($messages, $violation->getMessage());
+            }
+
+            return new JsonResponse(
+                ['errors' => $messages], 
+                JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 
+                ['Content-Type' => 'application/json;charset=UTF-8']
+            );
+            
+        }
 
         $em->persist($comment);
         $em->flush();

@@ -13,6 +13,7 @@ use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\HttpFoundation\Response;
 use App\Repository\OptionRepository;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class OptionController extends AbstractController
 {
@@ -22,11 +23,30 @@ class OptionController extends AbstractController
     public function create(
         Request $request, 
         SerializerInterface $serializer, 
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        ValidatorInterface $validator
     ): JsonResponse
     {
 
         $option = $serializer->deserialize($request->getContent(), Option::class, 'json');
+
+        $violations = $validator->validate($option);
+
+        if (count($violations) > 0) {
+
+            $messages = [];
+            foreach($violations as $violation) {
+                array_push($messages, $violation->getMessage());
+            }
+
+            return new JsonResponse(
+                ['errors' => $messages], 
+                JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 
+                ['Content-Type' => 'application/json;charset=UTF-8']
+            );
+            
+        }
+
         $em->persist($option);
         $em->flush();
 
@@ -111,14 +131,34 @@ class OptionController extends AbstractController
         Request $request, 
         Option $currentOption, 
         SerializerInterface $serializer, 
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        ValidatorInterface $validator
+
     ): JsonResponse
     {
 
         $updatedOption = $serializer->deserialize($request->getContent(), 
-                Option::class, 
-                'json', 
-                [AbstractNormalizer::OBJECT_TO_POPULATE => $currentOption]);
+            Option::class, 
+            'json', 
+            [AbstractNormalizer::OBJECT_TO_POPULATE => $currentOption]
+        );
+
+        $violations = $validator->validate($updatedOption);
+
+        if (count($violations) > 0) {
+
+            $messages = [];
+            foreach($violations as $violation) {
+                array_push($messages, $violation->getMessage());
+            }
+
+            return new JsonResponse(
+                ['errors' => $messages], 
+                JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 
+                ['Content-Type' => 'application/json;charset=UTF-8']
+            );
+            
+        }
 
         $em->persist($updatedOption);
         $em->flush();

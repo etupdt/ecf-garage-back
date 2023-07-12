@@ -25,9 +25,9 @@ class Garage
         minMessage: 'La raison sociale doit faire au minimum {{ limit }} caractères de long',
     )]
     #[Assert\Regex(
-        pattern: "/^[0-9a-zA-Z -+*_='/]*$/",
-        match: false,
-        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+        pattern: "/^[0-9a-zA-Z -+*_='\/]*$/",
+        match: true,
+        message: 'raison sociale : Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
     )]
     private ?string $raison = null;
 
@@ -41,13 +41,12 @@ class Garage
     )]
     #[Assert\Regex(
         pattern: "/^(0)[1-9]( \d{2}){4}$/",
-        match: false,
+        match: true,
         message: 'Le téléphone n\'a pas le bon format. Caractères autorisés : chiffres et espaces'
     )]
     private ?string $phone = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $address1 = null;
     #[Assert\NotBlank(
         message: 'L\'adresse 1 est obligatoire'
     )]
@@ -56,22 +55,23 @@ class Garage
         minMessage: 'L\'adresse 1 doit faire au minimum {{ limit }} caractères de long',
     )]
     #[Assert\Regex(
-        pattern: "/[0-9a-zA-Z -+*_='/]{0,}/",
-        match: false,
-        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+        pattern: "/[0-9a-zA-Z -+*_='\/]{0,}/",
+        match: true,
+        message: 'adresse : Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
     )]
+    private ?string $address1 = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\Regex(
-        pattern: "/[0-9a-zA-Z -+*_='/]{0,}/",
+        pattern: "/[0-9a-zA-Z -+*_='\/]{0,}/",
         match: false,
-        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+        message: 'complément d\'adresse : Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
     )]
     private ?string $address2 = null;
 
     #[ORM\Column(length: 10)]
     #[Assert\NotBlank(
-        message: 'Le prénom est obligatoire'
+        message: 'Le code postal est obligatoire'
     )]
     #[Assert\Length(
         min: 5,
@@ -81,8 +81,8 @@ class Garage
     )]
     #[Assert\Regex(
         pattern: "/^[0-9]*$/",
-        match: false,
-        message: 'Caractères autorisés : chiffres'
+        match: true,
+        message: 'code postal : Caractères autorisés : chiffres'
     )]
     private ?string $zip = null;
 
@@ -95,65 +95,65 @@ class Garage
         minMessage: 'La localité doit faire au minimum {{ limit }} caractères de long',
     )]
     #[Assert\Regex(
-        pattern: "/[0-9a-zA-Z -+*_='/]{0,}/",
-        match: false,
-        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+        pattern: "/[0-9a-zA-Z -+*_='\/]{0,}/",
+        match: true,
+        message: 'Localité : Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
     )]
     private ?string $locality = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\Regex(
-        pattern: "/[0-9a-zA-Z -+*_='/]{0,}/",
-        match: false,
-        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+        pattern: "/[0-9a-zA-Z -+*_='\/]{0,}/",
+        match: true,
+        message: 'jour 1 : Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
     )]
     private ?string $day1hours = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\Regex(
-        pattern: "/[0-9a-zA-Z -+*_='/]{0,}/",
-        match: false,
-        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+        pattern: "/[0-9a-zA-Z -+*_='\/]{0,}/",
+        match: true,
+        message: 'jour 2 : Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
     )]
     private ?string $day2hours = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\Regex(
-        pattern: "/[0-9a-zA-Z -+*_='/]{0,}/",
-        match: false,
-        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+        pattern: "/[0-9a-zA-Z -+*_='\/]{0,}/",
+        match: true,
+        message: 'jour 3 : Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
     )]
     private ?string $day3hours = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\Regex(
-        pattern: "/[0-9a-zA-Z -+*_='/]{0,}/",
-        match: false,
-        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+        pattern: "/[0-9a-zA-Z -+*_='\/]{0,}/",
+        match: true,
+        message: 'jour 4 : Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
     )]
     private ?string $day4hours = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\Regex(
-        pattern: "/[0-9a-zA-Z -+*_='/]{0,}/",
-        match: false,
-        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+        pattern: "/[0-9a-zA-Z -+*_='\/]{0,}/",
+        match: true,
+        message: 'jour 5 : Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
     )]
     private ?string $day5hours = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\Regex(
-        pattern: "/[0-9a-zA-Z -+*_='/]{0,}/",
-        match: false,
-        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+        pattern: "/[0-9a-zA-Z -+*_='\/]{0,}/",
+        match: true,
+        message: 'jour 6 : Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
     )]
     private ?string $day6hours = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\Regex(
-        pattern: "/[0-9a-zA-Z -+*_='/]{0,}/",
-        match: false,
-        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+        pattern: "/[0-9a-zA-Z -+*_='\/]{0,}/",
+        match: true,
+        message: 'jour 7 : Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
     )]
     private ?string $day7hours = null;
 
@@ -375,9 +375,9 @@ class Garage
     /**
      * @return Collection<int, Comment>
      */
-    public function getComments(): Collection
+    public function getComments()
     {
-        return $this->comments;
+        return $this->comments->getValues();
     }
 
     public function addComment(Comment $comment): self
@@ -435,9 +435,9 @@ class Garage
     /**
      * @return Collection<int, Service>
      */
-    public function getServices(): Collection
+    public function getServices()
     {
-        return $this->services;
+        return $this->services->getValues();
     }
 
     public function addService(Service $service): self
