@@ -186,7 +186,6 @@ class OptionController extends AbstractController
     #[Route('/api/option/{id}', name: 'app_delete_option_id', methods: ['DELETE'])]
     #[IsGranted('ROLE_USER')]
     public function delete(
-        Request $request, 
         Option $option, 
         EntityManagerInterface $em
     ): JsonResponse
