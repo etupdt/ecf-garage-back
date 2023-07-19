@@ -23,8 +23,8 @@ phases:
       - aws s3 cp s3://studi-interspe/symfony/prod/ssl/studi-cacert.crt .
       - aws s3 cp s3://studi-interspe/symfony/prod/ssl/httpd-vhosts-9443.conf .
 
-      - aws s3 cp s3://studi-interspe/symfony/prod/jwt/private.pem ./jwt2/private.pem
-      - aws s3 cp s3://studi-interspe/symfony/prod/jwt/public.pem ./jwt2/public.pem
+      - aws s3 cp s3://studi-interspe/symfony/prod/jwt/private.pem .
+      - aws s3 cp s3://studi-interspe/symfony/prod/jwt/public.pem .
 
       - aws s3 cp s3://studi-interspe/symfony/prod/.env .
 
