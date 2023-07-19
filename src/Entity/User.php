@@ -42,9 +42,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         maxMessage: 'Le prénom doit faire au maximum {{ limit }} caractères de long',
     )]
     #[Assert\Regex(
-        pattern: "/^[a-zA-Z -\']*$/",
-        match: false,
-        message: 'Caractères autorisés : lettres, tiret et quotes'
+        pattern: "/^[a-zA-Z -éèàêç]*$/",
+        match: true,
+        message: 'prénom : Caractères autorisés : lettres, tiret et quotes'
     )]
     private ?string $firstname = null;
 
@@ -59,9 +59,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         maxMessage: 'Le nom doit faire au maximum {{ limit }} caractères de long',
     )]
     #[Assert\Regex(
-        pattern: "/^[a-zA-Z -\']*$/",
-        match: false,
-        message: 'Caractères autorisés : lettres, tirets et quotes'
+        pattern: "/^[a-zA-Z -éèàêç]*$/",
+        match: true,
+        message: 'nom : Caractères autorisés : lettres, tirets et quotes'
     )]
     private ?string $lastname = null;
 
@@ -75,7 +75,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     )]
     #[Assert\Regex(
         pattern: "/^(0)[1-9]( \d{2}){4}$/",
-        match: false,
+        match: true,
         message: 'Le téléphone n\'a pas le bon format. Caractères autorisés : chiffres et espaces'
     )]
     private ?string $phone = null;

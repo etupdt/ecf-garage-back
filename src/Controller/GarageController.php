@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 use App\Repository\GarageRepository;
 use App\Repository\ServiceRepository;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class GarageController extends AbstractController
 {
@@ -24,7 +25,8 @@ class GarageController extends AbstractController
         Request $request, 
         SerializerInterface $serializer, 
         ServiceRepository $serviceRepository,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        ValidatorInterface $validator
     ): JsonResponse
     {
 
@@ -41,6 +43,23 @@ class GarageController extends AbstractController
             }
         }
         
+        $violations = $validator->validate($newGarage);
+
+        if (count($violations) > 0) {
+
+            $messages = [];
+            foreach($violations as $violation) {
+                array_push($messages, $violation->getMessage());
+            }
+
+            return new JsonResponse(
+                ['errors' => $messages], 
+                JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 
+                ['Content-Type' => 'application/json;charset=UTF-8']
+            );
+            
+        }
+
         $em->persist($newGarage);
         $em->flush();
 
@@ -144,7 +163,8 @@ class GarageController extends AbstractController
         Garage $currentGarage, 
         SerializerInterface $serializer, 
         EntityManagerInterface $em,
-        ServiceRepository $serviceRepository
+        ServiceRepository $serviceRepository,
+        ValidatorInterface $validator
     ): JsonResponse
     {
         
@@ -184,6 +204,23 @@ class GarageController extends AbstractController
             $currentGarage->addService($service);
         }
     
+        $violations = $validator->validate($currentGarage);
+
+        if (count($violations) > 0) {
+
+            $messages = [];
+            foreach($violations as $violation) {
+                array_push($messages, $violation->getMessage());
+            }
+
+            return new JsonResponse(
+                ['errors' => $messages], 
+                JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 
+                ['Content-Type' => 'application/json;charset=UTF-8']
+            );
+            
+        }
+
         $em->persist($currentGarage);
         $em->flush();
 

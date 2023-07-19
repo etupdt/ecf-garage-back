@@ -18,6 +18,7 @@ use App\Repository\ImageRepository;
 use Symfony\Component\Filesystem\Filesystem;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class CarController extends AbstractController
 {
@@ -30,7 +31,8 @@ class CarController extends AbstractController
         EntityManagerInterface $em,
         GarageRepository $garageRepository,
         OptionRepository $optionRepository,
-        SluggerInterface $slugger
+        SluggerInterface $slugger,
+        ValidatorInterface $validator
     ): JsonResponse
     {
 
@@ -79,6 +81,23 @@ class CarController extends AbstractController
                 $newFilename
             );    
     
+        }
+
+        $violations = $validator->validate($newCar);
+
+        if (count($violations) > 0) {
+
+            $messages = [];
+            foreach($violations as $violation) {
+                array_push($messages, $violation->getMessage());
+            }
+
+            return new JsonResponse(
+                ['errors' => $messages], 
+                JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 
+                ['Content-Type' => 'application/json;charset=UTF-8']
+            );
+            
         }
 
         $em->persist($newCar);
@@ -169,7 +188,8 @@ class CarController extends AbstractController
         GarageRepository $garageRepository,
         OptionRepository $optionRepository,
         EntityManagerInterface $em,
-        SluggerInterface $slugger
+        SluggerInterface $slugger,
+        ValidatorInterface $validator
     ): JsonResponse
     {
 
@@ -255,6 +275,23 @@ class CarController extends AbstractController
             $imageOrigine->setHash($imageOrigine->getHash());
             $imageOrigine->setCar($currentCar);
 
+        }
+
+        $violations = $validator->validate($currentCar);
+
+        if (count($violations) > 0) {
+
+            $messages = [];
+            foreach($violations as $violation) {
+                array_push($messages, $violation->getMessage());
+            }
+
+            return new JsonResponse(
+                ['errors' => $messages], 
+                JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 
+                ['Content-Type' => 'application/json;charset=UTF-8']
+            );
+            
         }
 
         $em->persist($currentCar);

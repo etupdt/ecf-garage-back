@@ -29,10 +29,10 @@ class Car
         value: 1950,
         message: 'L\'année doit être supérieure à 1950'
     )]
-    #[Assert\Expression(
+/*    #[Assert\Expression(
         "value <= date('Y')",
         message: 'L\'année doit être inférieure ou égale à l\'année en cours'
-    )]
+    )]*/
     private ?int $year = null;
 
     #[ORM\Column]
@@ -70,8 +70,8 @@ class Car
     )]
     #[Assert\Regex(
         pattern: "/^[0-9a-zA-Z -\']*$/",
-        match: false,
-        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+        match: true,
+        message: 'marque : Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
     )]
     private ?string $brand = null;
 
@@ -85,8 +85,8 @@ class Car
     )]
     #[Assert\Regex(
         pattern: "/^[0-9a-zA-Z -\']*$/",
-        match: false,
-        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+        match: true,
+        message: 'modèle : Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
     )]
     private ?string $model = null;
 

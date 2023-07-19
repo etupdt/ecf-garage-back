@@ -24,9 +24,9 @@ class Service
         minMessage: 'Le nom du service doit faire au minimum {{ limit }} caractères de long',
     )]
     #[Assert\Regex(
-        pattern: "/^[a-zA-Z -\']*$/",
-        match: false,
-        message: 'Caractères autorisés : lettres, tiret et quotes'
+        pattern: "/^[a-zA-Z -éèàêç]*$/",
+        match: true,
+        message: 'nom : Caractères autorisés : lettres, tiret et quotes'
     )]
     private ?string $name = null;
 
@@ -39,9 +39,9 @@ class Service
         minMessage: 'La description doit faire au minimum {{ limit }} caractères de long',
     )]
     #[Assert\Regex(
-        pattern: "/^[0-9a-zA-Z -\']*$/",
-        match: false,
-        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+        pattern: "/[0-9a-zA-Z -+*_='\/]*$/",
+        match: true,
+        message: 'description : Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
     )]
     private ?string $description = null;
 

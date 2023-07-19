@@ -25,8 +25,8 @@ class Option
         minMessage: 'Le nom de l\'option doit faire au minimum {{ limit }} caractères de long',
     )]
     #[Assert\Regex(
-        pattern: "/^[a-zA-Z -\']*$/",
-        match: false,
+        pattern: "/^[a-zA-Z0-9 -éèàêç]*$/",
+        match: true,
         message: 'Caractères autorisés : lettres, tiret et quotes'
     )]
     private ?string $name = null;
@@ -40,8 +40,8 @@ class Option
         minMessage: 'La description doit faire au minimum {{ limit }} caractères de long',
     )]
     #[Assert\Regex(
-        pattern: "/[0-9a-zA-Z -+*_='/]*$/",
-        match: false,
+        pattern: "/[0-9a-zA-Z -+*_='\/]*$/",
+        match: true,
         message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
     )]
     private ?string $description = null;

@@ -16,6 +16,7 @@ use App\Repository\ServiceRepository;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ServiceController extends AbstractController
 {
@@ -25,7 +26,8 @@ class ServiceController extends AbstractController
     public function create(
         Request $request, 
         EntityManagerInterface $em,
-        SluggerInterface $slugger
+        SluggerInterface $slugger,
+        ValidatorInterface $validator
     ): JsonResponse
     {
 
@@ -41,6 +43,23 @@ class ServiceController extends AbstractController
         $service->setName($request->get('name'));
         $service->setDescription($request->get('description'));
         $service->setImage($image);
+
+        $violations = $validator->validate($service);
+
+        if (count($violations) > 0) {
+
+            $messages = [];
+            foreach($violations as $violation) {
+                array_push($messages, $violation->getMessage());
+            }
+
+            return new JsonResponse(
+                ['errors' => $messages], 
+                JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 
+                ['Content-Type' => 'application/json;charset=UTF-8']
+            );
+            
+        }
 
         $em->persist($service);
         $em->flush();
@@ -121,7 +140,8 @@ class ServiceController extends AbstractController
         Request $request, 
         ServiceRepository $serviceRepository,
         EntityManagerInterface $em,
-        SluggerInterface $slugger
+        SluggerInterface $slugger,
+        ValidatorInterface $validator
     ): JsonResponse
     {
 
@@ -152,6 +172,23 @@ class ServiceController extends AbstractController
 
         $currentService->setName($request->get('name'));
         $currentService->setDescription($request->get('description'));
+
+        $violations = $validator->validate($currentService);
+
+        if (count($violations) > 0) {
+
+            $messages = [];
+            foreach($violations as $violation) {
+                array_push($messages, $violation->getMessage());
+            }
+
+            return new JsonResponse(
+                ['errors' => $messages], 
+                JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 
+                ['Content-Type' => 'application/json;charset=UTF-8']
+            );
+            
+        }
 
         $em->persist($currentService);
         $em->flush();

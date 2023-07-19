@@ -51,7 +51,7 @@ class ContactController extends AbstractController
 
         if (count($violations) > 0) {
 
-            $messages =[];
+            $messages = [];
             foreach($violations as $violation) {
                 array_push($messages, $violation->getMessage());
             }

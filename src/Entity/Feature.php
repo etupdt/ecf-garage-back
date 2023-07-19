@@ -25,8 +25,8 @@ class Feature
     )]
     #[Assert\Regex(
         pattern: "/^[a-zA-Z -\']*$/",
-        match: false,
-        message: 'Caractères autorisés : lettres, tiret et quotes'
+        match: true,
+        message: 'nom : Caractères autorisés : lettres, tiret et quotes'
     )]
     private ?string $name = null;
 
@@ -40,8 +40,8 @@ class Feature
     )]
     #[Assert\Regex(
         pattern: "/^[0-9a-zA-Z -\']*$/",
-        match: false,
-        message: 'Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
+        match: true,
+        message: 'description : Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
     )]
     private ?string $description = null;
 
