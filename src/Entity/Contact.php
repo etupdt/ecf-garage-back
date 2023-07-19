@@ -24,7 +24,7 @@ class Contact
         minMessage: 'Le sujet doit faire au minimum {{ limit }} caractères de long',
     )]
     #[Assert\Regex(
-        pattern: "/^[a-zA-Z0-9 -éèàêç]*$/",
+        pattern: "/^[a-zA-Z0-9 -éèàêç€]*$/",
         match: true,
         message: 'Le sujet : Caractères autorisés : lettres, chiffres, tirets, signes et underscore'
     )]
