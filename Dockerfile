@@ -31,6 +31,11 @@ RUN chmod 777 var/* -R
 
 WORKDIR /var/www/html/ecf-garage-back
 
+RUN mkdir config/jwt
+
+COPY ./private.pem config/jwt/
+COPY ./public.pem config/jwt/
+
 RUN mkdir -p /etc/apache2/ssl
 
 COPY ./studi-public.crt /etc/apache2/ssl/server.crt
