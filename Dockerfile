@@ -31,7 +31,7 @@ RUN chmod 777 var/* -R
 
 WORKDIR /var/www/html/ecf-garage-back
 
-RUN mkdir config/jwt
+RUN mkdir -p config/jwt
 
 COPY ./private.pem config/jwt/
 COPY ./public.pem config/jwt/
