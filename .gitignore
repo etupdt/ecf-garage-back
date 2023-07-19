@@ -23,7 +23,7 @@
 ###< lexik/jwt-authentication-bundle ###
 
 ###> images ###
-/public/images/
-!/public/images/0_default.jpg
+/public/images/*
+!/public/images/.gitignore
 ###< images ###
 
