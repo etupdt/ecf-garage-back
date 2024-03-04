@@ -134,7 +134,7 @@ class ServiceController extends AbstractController
     
     }
     
-    #[Route('/api/service', name: 'app_put_service_id', methods: ['POST'])]
+    #[Route('/api/service', name: 'app_put_service_id', methods: ['PUT'])]
     #[IsGranted('ROLE_ADMIN')]
     public function update(
         Request $request, 

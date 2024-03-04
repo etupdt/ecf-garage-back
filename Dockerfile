@@ -36,7 +36,7 @@ RUN mkdir -p config/jwt
 COPY ./private.pem config/jwt/
 COPY ./public.pem config/jwt/
 
-RUN mkdir -p /etc/apache2/ssl
+RUN mkdir -p /etc/apache2/ssl 
 
 COPY ./studi-public.crt /etc/apache2/ssl/server.crt
 COPY ./studi-private.key /etc/apache2/ssl/server.key

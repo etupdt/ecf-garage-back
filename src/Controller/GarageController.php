@@ -235,11 +235,10 @@ class GarageController extends AbstractController
             ]
         );
         
-        return new JsonResponse(
-            $updatedGarage, 
+        return $this->json( 
+            [$updatedGarage], 
             Response::HTTP_OK, 
-            ['Content-Type' => 'application/json;charset=UTF-8'], 
-            true
+            ['Content-Type' => 'application/json;charset=UTF-8']
         );
 
     }
