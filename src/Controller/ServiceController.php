@@ -17,6 +17,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Psr\Log\LoggerInterface;
 
 class ServiceController extends AbstractController
 {
@@ -141,10 +142,14 @@ class ServiceController extends AbstractController
         ServiceRepository $serviceRepository,
         EntityManagerInterface $em,
         SluggerInterface $slugger,
+        LoggerInterface $logger,
         ValidatorInterface $validator
     ): JsonResponse
     {
 
+        $logger->info('I just got the logger');
+        $logger->error('An error occurred');
+    
         $imageFile = $request->files->get('garage_image');
 
         $currentService = $serviceRepository->find(intval($request->get('id')));
