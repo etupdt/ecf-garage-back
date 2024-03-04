@@ -134,7 +134,7 @@ class ServiceController extends AbstractController
     
     }
     
-    #[Route('/api/service', name: 'app_put_service_id', methods: ['PUT'])]
+    #[Route('/api/service', name: 'app_put_service_id', methods: ['POST'])]
     #[IsGranted('ROLE_ADMIN')]
     public function update(
         Request $request, 
@@ -148,20 +148,21 @@ class ServiceController extends AbstractController
         $imageFile = $request->files->get('garage_image');
 
         $currentService = $serviceRepository->find(intval($request->get('id')));
-        
+
         if ($imageFile && $currentService->getImage()->getHash() !== $request->get('image_hash')) {
             
             $filesystem = new Filesystem();
             $filesystem->remove(
                 $this->getParameter('kernel.project_dir')."/public/images/".$currentService->getImage()->getFilename()
             );
+            // $em->remove($currentService->getImage());
 
-            $image = new Image();
+            $image = $currentService->getImage();
             $safeFileName = $slugger->slug($imageFile->getClientOriginalName());
             $newFilename = $safeFileName.'-'.uniqid().'.'.$imageFile->guessExtension();
             $image->setFilename($newFilename);
             $image->setHash($request->get('image_hash'));
-            $currentService->setImage($image);
+            // $currentService->setImage($image);
             
             $imageFile->move(
                 $this->getParameter('kernel.project_dir')."/public/images",
