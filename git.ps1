@@ -5,7 +5,9 @@ if (Test-Path "C:\Temp\in") {
     Remove-Item "C:\Temp\in" -Recurse -Force
 }
 
-git clone https://github.com/etupdt/ecf-garage-back.git 'C:\Temp\in'
+$branch = Read-Host -Prompt "quelle branche ? "
+
+git clone --branch $branch https://github.com/etupdt/ecf-garage-back.git 'C:\Temp\in'
 
 if ($LASTEXITCODE -eq 0) {
 
