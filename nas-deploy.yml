@@ -1,0 +1,9 @@
+steps:
+  collecte:
+    repo: https://github.com/etupdt/ecf-garage-back.git --branch feature/monolog
+    options: 
+  build: 
+    type: symfony
+  deploy:
+    application: ecf-garage-back
+    options: --no-cache

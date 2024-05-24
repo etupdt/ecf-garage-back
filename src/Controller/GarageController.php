@@ -86,7 +86,7 @@ class GarageController extends AbstractController
                 'circular_reference_handler' => function ($object) {
                     return $object->getId();
                 },
-                AbstractNormalizer::IGNORED_ATTRIBUTES => ['contacts', 'users', 'cars', 'comments', 'service'],
+                AbstractNormalizer::IGNORED_ATTRIBUTES => ['contacts', 'users', 'cars', 'comments'],
             ]
         );
 
@@ -133,8 +133,6 @@ class GarageController extends AbstractController
         SerializerInterface $serializer
     ): JsonResponse
     {
-
-        error_log("=================================>".sizeof($garage->getServices()));
 
         $garageSerialized = $serializer->serialize(
             $garage,
@@ -191,6 +189,7 @@ class GarageController extends AbstractController
             }
         }
         
+        
         $updatedGarage = $serializer->deserialize($request->getContent(), 
             Garage::class, 
             'json', 
@@ -201,11 +200,11 @@ class GarageController extends AbstractController
         );
         
         foreach($newGarage->getServices() as $service) {
-            $currentGarage->addService($service);
+            $updatedGarage->addService($service);
         }
-    
-        $violations = $validator->validate($currentGarage);
 
+        $violations = $validator->validate($updatedGarage);
+        
         if (count($violations) > 0) {
 
             $messages = [];
@@ -216,29 +215,38 @@ class GarageController extends AbstractController
             return new JsonResponse(
                 ['errors' => $messages], 
                 JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 
-                ['Content-Type' => 'application/json;charset=UTF-8']
+                ['Content-Type' => 'application/json;charset=UTF-8'],
+                true
             );
             
         }
 
-        $em->persist($currentGarage);
+        $em->persist($updatedGarage);
         $em->flush();
 
-        $updatedGarage = $serializer->serialize(
-            $currentGarage,
-            'json', 
-            [
-                'circular_reference_handler' => function ($object) {
-                    return $object->getId();
-                },
-                AbstractNormalizer::IGNORED_ATTRIBUTES => ['garages', 'users', 'contacts', 'cars', 'comments'],
-            ]
-        );
-        
-        return $this->json( 
-            [$updatedGarage], 
+        try {
+
+            $returnGarage = $serializer->serialize(
+                $updatedGarage,
+                'json', 
+                [
+                    'circular_reference_handler' => function ($object) {
+                        return $object->getId();
+                    },
+                    AbstractNormalizer::IGNORED_ATTRIBUTES => ['garages', 'users', 'contacts', 'cars', 'comments'],
+                ]
+            );
+
+        } catch (\Exception $exception) {
+            error_log($updatedGarage);
+            error_log($exception->getMessage());
+        }    
+
+        return new JsonResponse(
+            $returnGarage, 
             Response::HTTP_OK, 
-            ['Content-Type' => 'application/json;charset=UTF-8']
+            ['Content-Type' => 'application/json;charset=UTF-8'], 
+            true
         );
 
     }

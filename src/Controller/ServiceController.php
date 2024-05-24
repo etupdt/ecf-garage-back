@@ -17,6 +17,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Psr\Log\LoggerInterface;
 
 class ServiceController extends AbstractController
 {
@@ -141,6 +142,7 @@ class ServiceController extends AbstractController
         ServiceRepository $serviceRepository,
         EntityManagerInterface $em,
         SluggerInterface $slugger,
+        LoggerInterface $logger,
         ValidatorInterface $validator
     ): JsonResponse
     {
@@ -149,20 +151,25 @@ class ServiceController extends AbstractController
 
         $currentService = $serviceRepository->find(intval($request->get('id')));
 
-        if ($imageFile && $currentService->getImage()->getHash() !== $request->get('image_hash')) {
+        $imageFileName = $this->getParameter('kernel.project_dir')."/public/images/".$currentService->getImage()->getFilename();
+
+        if (!file_exists($imageFileName) || ($imageFile && $currentService->getImage()->getHash() !== $request->get('image_hash'))) {
             
-            $filesystem = new Filesystem();
-            $filesystem->remove(
-                $this->getParameter('kernel.project_dir')."/public/images/".$currentService->getImage()->getFilename()
-            );
-            // $em->remove($currentService->getImage());
+            try {
+                $filesystem = new Filesystem();
+                $filesystem->remove(
+                    $this->getParameter('kernel.project_dir')."/public/images/".$currentService->getImage()->getFilename()
+                );
+            } catch (\Exception $exception) {
+                $logger->error('Erreur suppression fichier image');
+                $logger->error($exception->getMessage());
+            }
 
             $image = $currentService->getImage();
             $safeFileName = $slugger->slug($imageFile->getClientOriginalName());
             $newFilename = $safeFileName.'-'.uniqid().'.'.$imageFile->guessExtension();
             $image->setFilename($newFilename);
             $image->setHash($request->get('image_hash'));
-            // $currentService->setImage($image);
             
             $imageFile->move(
                 $this->getParameter('kernel.project_dir')."/public/images",
